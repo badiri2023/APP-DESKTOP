@@ -12,7 +12,7 @@
 <?import javafx.scene.text.Font?>
 
 <AnchorPane fx:id="anchor" minHeight="500.0" minWidth="600.0" 
-            xmlns="http://javafx.com/javafx/19" 
+            xmlns="http://javafx.com/javafx/22" 
             xmlns:fx="http://javafx.com/fxml/1" 
             fx:controller="com.client.CtrlConfig"
             style="-fx-background-color: linear-gradient(to bottom, #0f1f2d, #1e3a5f);">
@@ -40,7 +40,7 @@
                   <DropShadow color="#00000050" radius="10.0"/>
                </effect>
                
-               <Label text="CONFIGURACIÓN DEL SERVIDOR" textFill="#2ed573" 
+               <Label text="CONFIGURACIÓN DEL JUEGO" textFill="#2ed573" 
                       style="-fx-font-weight: bold; -fx-font-size: 22px;">
                   <effect>
                      <DropShadow color="#2ed57340" radius="4.0"/>
@@ -56,35 +56,17 @@
                              style="-fx-background-color: rgba(255,255,255,0.9); -fx-background-radius: 10; -fx-border-radius: 10; -fx-font-size: 14px; -fx-border-color: #ff4754; -fx-border-width: 2;"/>
                </HBox>
 
-               <!-- Campo Protocolo -->
-               <HBox alignment="CENTER" spacing="15">
-                  <Label text="PROTOCOLO:" textFill="#ffffff" 
-                         style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-min-width: 100;"/>
-                  <TextField fx:id="txtProtocol" promptText="ws o wss" 
-                             prefWidth="250" prefHeight="40"
-                             style="-fx-background-color: rgba(255,255,255,0.9); -fx-background-radius: 10; -fx-border-radius: 10; -fx-font-size: 14px; -fx-border-color: #ff4754; -fx-border-width: 2;"/>
-               </HBox>
-
-               <!-- Campo Host -->
+               <!-- Campo URL del servidor -->
                <HBox alignment="CENTER" spacing="15">
                   <Label text="SERVIDOR:" textFill="#ffffff" 
                          style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-min-width: 100;"/>
-                  <TextField fx:id="txtHost" promptText="IP del servidor" 
-                             prefWidth="250" prefHeight="40"
-                             style="-fx-background-color: rgba(255,255,255,0.9); -fx-background-radius: 10; -fx-border-radius: 10; -fx-font-size: 14px; -fx-border-color: #ff4754; -fx-border-width: 2;"/>
-               </HBox>
-
-               <!-- Campo Port -->
-               <HBox alignment="CENTER" spacing="15">
-                  <Label text="PUERTO:" textFill="#ffffff" 
-                         style="-fx-font-weight: bold; -fx-font-size: 14px; -fx-min-width: 100;"/>
-                  <TextField fx:id="txtPort" promptText="3000" 
+                  <TextField fx:id="txtServerUrl" promptText="matrixplay5.ieti.site" 
                              prefWidth="250" prefHeight="40"
                              style="-fx-background-color: rgba(255,255,255,0.9); -fx-background-radius: 10; -fx-border-radius: 10; -fx-font-size: 14px; -fx-border-color: #ff4754; -fx-border-width: 2;"/>
                </HBox>
 
                <!-- Botón Conectar -->
-               <Button text="CONECTAR AL PONG" fx:id="btnConnect" onAction="#connectToServer" 
+               <Button text="GUARDAR Y CONECTAR" fx:id="btnConnect" onAction="#connectToServer" 
                        prefWidth="280" prefHeight="45"
                        style="-fx-background-color: linear-gradient(to bottom, #ff4754, #e84118); -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 16px; -fx-background-radius: 25; -fx-border-radius: 25; -fx-border-color: #ffffff; -fx-border-width: 1;">
                   <effect>
@@ -114,18 +96,7 @@
                   </effect>
                </Button>
             </HBox>
-
-            <!-- Texto inferior -->
-            <Label text="Configura la conexión y prepárate para el desafío PONG" 
-                   textFill="#70a1ff" 
-                   style="-fx-font-style: italic; -fx-font-size: 13px;">
-               <VBox.margin>
-                  <Insets top="20.0" bottom="30.0"/>
-               </VBox.margin>
-               <effect>
-                  <DropShadow color="#00000030" radius="2.0"/>
-               </effect>
-            </Label>
+            
          </children>
       </VBox>
    </children>

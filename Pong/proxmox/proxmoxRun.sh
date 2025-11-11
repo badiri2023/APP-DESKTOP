@@ -24,7 +24,7 @@ fi
 
 echo "Generant el fitxer JAR..."
 rm -f "$JAR_PATH"
-./run.sh com.server.ServerMain build  # CAMBIO A SERVER MAIN
+./run.sh com.server.Main build  
 
 if [[ ! -f "$JAR_PATH" ]]; then
     echo "Error: No s'ha trobat l'arxiu JAR: $JAR_PATH"
@@ -52,7 +52,7 @@ ssh -t -p 20127 $SSH_OPTS "$USER@ieticloudpro.ieti.cat" << 'EOF'
     cd "$HOME/"
 
     # Detener proceso anterior - buscar por clase correcta
-    PID=$(ps aux | grep 'com.server.ServerMain' | grep -v 'grep' | awk '{print $2}')
+    PID=$(ps aux | grep 'com.server.Main' | grep -v 'grep' | awk '{print $2}')
     if [ -n "$PID" ]; then
       kill -15 $PID
       echo "Senyal SIGTERM enviat al procés $PID."
@@ -86,16 +86,16 @@ ssh -t -p 20127 $SSH_OPTS "$USER@ieticloudpro.ieti.cat" << 'EOF'
     done
 
     # ✅ CORREGIDO: Usar la clase correcta y dar más tiempo
-    echo "Iniciando servidor con: java -cp server-package.jar com.server.ServerMain"
-    nohup java -cp server-package.jar com.server.ServerMain > output.log 2>&1 &
+    echo "Iniciando servidor con: java -cp server-package.jar com.server.Main"
+    nohup java -cp server-package.jar com.server.Main > output.log 2>&1 &
     
     # ⭐ AUMENTAR TIEMPO DE ESPERA
     sleep 5
     
     # Verificar si el proceso está vivo
-    PID=$(ps aux | grep 'com.server.ServerMain' | grep -v 'grep' | awk '{print $2}')
+    PID=$(ps aux | grep 'com.server.Main' | grep -v 'grep' | awk '{print $2}')
     if [ -n "$PID" ]; then
-      echo "✅ Nou procés ServerMain amb PID $PID arrencat correctament."
+      echo "✅ Nou procés Main amb PID $PID arrencat correctament."
       echo "=== Verificando logs ==="
       tail -5 output.log
     else

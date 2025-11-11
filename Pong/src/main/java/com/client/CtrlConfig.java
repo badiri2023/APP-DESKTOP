@@ -4,22 +4,17 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
 public class CtrlConfig implements Initializable {
 
     @FXML
-    public TextField txtPlayerName;  // NUEVO: Campo para nombre del jugador
+    public TextField txtPlayerName;
     
     @FXML
-    public TextField txtProtocol;
-
-    @FXML
-    public TextField txtHost;
-
-    @FXML
-    public TextField txtPort;
+    public TextField txtServerUrl;
 
     @FXML
     public Label txtMessage;
@@ -33,39 +28,57 @@ public class CtrlConfig implements Initializable {
     private void loadSavedConfig() {
         ConfigManager.ConfigData config = ConfigManager.loadConfig();
         txtPlayerName.setText(config.playerName);
-        txtProtocol.setText(config.protocol);
-        txtHost.setText(config.host);
-        txtPort.setText(config.port);
+        txtServerUrl.setText(config.serverUrl);
     }
 
     @FXML
     private void connectToServer() {
-        // Guardar configuración antes de conectar
+        String playerName = txtPlayerName.getText().trim();
+        String serverUrl = txtServerUrl.getText().trim();
+        
+        // Validar campos
+        if (playerName.isEmpty()) {
+            txtMessage.setText("Por favor, introduce tu nombre");
+            return;
+        }
+        
+        if (serverUrl.isEmpty()) {
+            serverUrl = "matrixplay5.ieti.site";
+            txtServerUrl.setText(serverUrl);
+        }
+        
+        // Guardar configuración
         saveConfig();
-        Main.connectToServer();
+        
+        // Mostrar popup con la información
+        showConnectionInfo(playerName, serverUrl);
+        
+        txtMessage.setText("Configuración guardada correctamente");
     }
 
     private void saveConfig() {
         ConfigManager.ConfigData config = new ConfigManager.ConfigData();
         config.playerName = txtPlayerName.getText().trim();
-        config.protocol = txtProtocol.getText().trim();
-        config.host = txtHost.getText().trim();
-        config.port = txtPort.getText().trim();
+        config.serverUrl = txtServerUrl.getText().trim();
         
         ConfigManager.saveConfig(config);
     }
 
+    private void showConnectionInfo(String playerName, String serverUrl) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Información de Conexión");
+        alert.setHeaderText("Configuración guardada y lista para conectar");
+        alert.setContentText("Nombre del jugador: " + playerName + "\nServidor: " + serverUrl);
+        alert.showAndWait();
+    }
+
     @FXML
     private void setConfigLocal() {
-        txtProtocol.setText("ws");
-        txtHost.setText("localhost");
-        txtPort.setText("3000");
+        txtServerUrl.setText("localhost");
     }
 
     @FXML
     private void setConfigProxmox() {
-        txtProtocol.setText("wss");
-        txtHost.setText("matrixplay5.ieti.site");
-        txtPort.setText("443");
+        txtServerUrl.setText("matrixplay5.ieti.site");
     }
 }

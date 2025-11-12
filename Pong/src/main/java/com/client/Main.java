@@ -1,52 +1,109 @@
 package com.client;
 
+import org.json.JSONObject;
+
+import javafx.animation.PauseTransition;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 public class Main extends Application {
 
-    public static String clientName = "";
-    public static CtrlConfig ctrlConfig;
+    public static LogCtrl logCtrl;
+    public static CtrlWait waitCtrl;
+    public static UtilsWS wsClient;
+
+    public static void main(String[] args) {
+        // Iniciar app JavaFX   
+        launch(args);
+    }
     
     @Override
     public void start(Stage stage) throws Exception {
-
-        final int windowWidth = 600;  // Ajustado al tamaño del FXML
-        final int windowHeight = 500;
-
-        UtilsViews.parentContainer.setStyle("-fx-font: 14 arial;");
-        
-        // CORREGIDO: Ruta correcta del FXML
-        UtilsViews.addView(getClass(), "ViewConfig", "resources/assets/viewConfig.fxml");
-
-        ctrlConfig = (CtrlConfig) UtilsViews.getController("ViewConfig");
-
-        Scene scene = new Scene(UtilsViews.parentContainer, windowWidth, windowHeight);
-        
-        stage.setScene(scene);
-        stage.setTitle("PONG - Configuración");
-        stage.setMinWidth(windowWidth);
-        stage.setMinHeight(windowHeight);
-        
-        // Add icon - corrección de la ruta
         try {
-            Image icon = new Image(getClass().getResourceAsStream("/assets/icon.png"));
-            stage.getIcons().add(icon);
+            final int windowWidth = 1200;
+            final int windowHeight = 650;
+
+            // Mensaje de configuración
+            System.out.println("Sistema de configuración activado");
+            System.out.println("Los datos se guardarán en: " + System.getProperty("user.home") + "/Desktop/pong_config.json");
+
+            UtilsViews.parentContainer.setStyle("-fx-font: 14 arial;");
+            UtilsViews.addView(getClass(), "ViewLog", "/assets/logView.fxml");
+            UtilsViews.addView(getClass(), "ViewWait", "/assets/waitView.fxml");
+
+            logCtrl = (LogCtrl) UtilsViews.getController("ViewLog");
+            waitCtrl = (CtrlWait) UtilsViews.getController("ViewWait");
+
+            
+            Scene scene = new Scene(UtilsViews.parentContainer, windowWidth, windowHeight);
+
+            UtilsViews.setStage(stage);
+            stage.setScene(scene);
+            stage.setTitle("Pong");
+            stage.setMinWidth(windowWidth);
+            stage.setMinHeight(windowHeight);
+            
+            // Add icon (fixed path)
+            try {
+                Image icon = new Image(getClass().getResourceAsStream("/icons/icon.png"));
+                stage.getIcons().add(icon);
+            } catch (Exception e) {
+                System.err.println("No se pudo cargar el icono: " + e.getMessage());
+            }
+
+            stage.show();
+
         } catch (Exception e) {
-            System.out.println("No se pudo cargar el icono: " + e.getMessage());
+            System.err.println("Error no controlado: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+      @Override
+        public void stop() { 
+            if (wsClient != null) {
+                wsClient.forceExit();
+            }
+            System.exit(1); // kill executors
         }
         
-        stage.show();
-    }
+        public static void pauseDuring(long milliseconds, Runnable action) {
+            PauseTransition pause = new PauseTransition(Duration.millis(milliseconds));
+            pause.setOnFinished(event -> Platform.runLater(action));
+            pause.play();
+        }
 
-    @Override
-    public void stop() { 
-        System.exit(0);
-    }
+        public static void connectToServer(){
+            pauseDuring(1500, () -> {
+            wsClient = UtilsWS.getSharedInstance(logCtrl.getUrl());
 
-    public static void main(String[] args) {
-        launch(args);
+            wsClient.onMessage((response) -> { 
+                Platform.runLater(() -> { 
+                    wsMessage(response); 
+                }); 
+            });
+            
+            // Enviar información del usuario después de conectar
+            pauseDuring(2000, () -> {
+                if (wsClient != null && wsClient.isOpen()) {
+                    JSONObject userInfo = new JSONObject();
+                    userInfo.put("type", "userInfo");
+                    userInfo.put("userName", logCtrl.getUserName().trim()); // Usar el nombre ingresado
+                    wsClient.safeSend(userInfo.toString());
+                    System.out.println("Enviando nombre de usuario: " + logCtrl.getUserName().trim());
+                } 
+            });
+        });
+    }    
+
+    private static void wsMessage(String response) {
+        // blablalbalbal
+
+        // URL: wss://matrixplay1.ieti.site:443
     }
+      
 }

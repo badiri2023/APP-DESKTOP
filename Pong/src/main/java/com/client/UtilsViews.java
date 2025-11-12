@@ -1,6 +1,7 @@
 package com.client;
 
 import java.util.ArrayList;
+
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -10,30 +11,30 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class UtilsViews {
 
     public static StackPane parentContainer = new StackPane();
     public static ArrayList<Object> controllers = new ArrayList<>();
+    private static Stage primaryStage;
+    
+    // Método simple para guardar el Stage
+    public static void setStage(Stage stage) {
+        primaryStage = stage;
+    }
+    
+    // Método simple para obtener el Stage
+    public static Stage getStage() {
+        return primaryStage;
+    }
 
     // Add one view to the list
     public static void addView(Class<?> cls, String name, String path) throws Exception {
         
-        // chequeo para evitar conflictos al cargar dos vistas
-        for (Node n : parentContainer.getChildren()) {
-            if (n.getId() != null && n.getId().equals(name)) {
-                System.err.println("⚠ La vista " + name + " ya existe. No se añadirá otra con el mismo id.");
-                return;
-            }
-        }
-
         boolean defaultView = false;
-        FXMLLoader loader = new FXMLLoader();
-        
-        // Cargar el FXML desde el classpath
-        loader.setLocation(cls.getResource("/" + path));
-        
+        FXMLLoader loader = new FXMLLoader(cls.getResource(path));
         Pane view = loader.load();
         ObservableList<Node> children = parentContainer.getChildren();
 
@@ -54,7 +55,7 @@ public class UtilsViews {
     public static Object getController(String viewId) {
         int index = 0;
         for (Node n : parentContainer.getChildren()) {
-            if (n.getId() != null && n.getId().equals(viewId)) {
+            if (n.getId().equals(viewId)) {
                 return controllers.get(index);
             }
             index++;
@@ -80,7 +81,7 @@ public class UtilsViews {
 
         // Show next view, hide others
         for (Node n : list) {
-            if (n.getId() != null && n.getId().equals(viewId)) {
+            if (n.getId().equals(viewId)) {
                 n.setVisible(true);
                 n.setManaged(true);
             } else {
@@ -104,26 +105,19 @@ public class UtilsViews {
         for (Node n : list) {
             if (n.isVisible()) {
                 curView = n;
-                break;
             }
         }
 
-        if (curView == null || (curView.getId() != null && curView.getId().equals(viewId))) {
+        if (curView.getId().equals(viewId)) {
             return; // Do nothing if current view is the same as the next view
         }
 
         // Get nxtView
         Node nxtView = null;
         for (Node n : list) {
-            if (n.getId() != null && n.getId().equals(viewId)) {
+            if (n.getId().equals(viewId)) {
                 nxtView = n;
-                break;
             }
-        }
-
-        if (nxtView == null) {
-            System.err.println("View not found: " + viewId);
-            return;
         }
 
         // Set nxtView visible
@@ -182,7 +176,7 @@ public class UtilsViews {
         timelineRight.setOnFinished(t -> {
             // Hide other views and reset all translations
             for (Node n : list) {
-                if (n.getId() == null || !n.getId().equals(viewId)) {
+                if (!n.getId().equals(viewId)) {
                     n.setVisible(false);
                     n.setManaged(false);
                 }
@@ -195,8 +189,5 @@ public class UtilsViews {
         parentContainer.requestFocus();
     }
 
-    public static void clearAllViews() {
-        parentContainer.getChildren().clear();
-        controllers.clear();
-    }
+    
 }

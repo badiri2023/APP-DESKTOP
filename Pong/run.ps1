@@ -73,4 +73,3 @@ if ($action -eq "build") {
     # Executa la comanda mvn
     mvn clean test-compile exec:java $execArgs
 }
-

@@ -17,7 +17,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.text.Font;
 
-public class LogCtrl implements Initializable {
+public class CtrlLogin implements Initializable {
 
     @FXML
     private AnchorPane anchorPane;

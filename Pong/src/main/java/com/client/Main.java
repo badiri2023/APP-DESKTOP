@@ -12,8 +12,8 @@ import javafx.util.Duration;
 
 public class Main extends Application {
 
-    public static LogCtrl logCtrl;
-    public static CtrlWait waitCtrl;
+    public static CtrlLogin ctrlLogin;
+    public static CtrlWait ctrlWait;
     public static UtilsWS wsClient;
 
     public static void main(String[] args) {
@@ -32,11 +32,11 @@ public class Main extends Application {
             System.out.println("Los datos se guardarán en: " + System.getProperty("user.home") + "/Desktop/pong_config.json");
 
             UtilsViews.parentContainer.setStyle("-fx-font: 14 arial;");
-            UtilsViews.addView(getClass(), "ViewLog", "/assets/logView.fxml");
-            UtilsViews.addView(getClass(), "ViewWait", "/assets/waitView.fxml");
+            UtilsViews.addView(getClass(), "ViewLogin", "/assets/viewLogin.fxml");
+            UtilsViews.addView(getClass(), "ViewWait", "/assets/viewWait.fxml");
 
-            logCtrl = (LogCtrl) UtilsViews.getController("ViewLog");
-            waitCtrl = (CtrlWait) UtilsViews.getController("ViewWait");
+            ctrlLogin = (CtrlLogin) UtilsViews.getController("ViewLogin");
+            ctrlWait = (CtrlWait) UtilsViews.getController("ViewWait");
 
             
             Scene scene = new Scene(UtilsViews.parentContainer, windowWidth, windowHeight);
@@ -79,7 +79,7 @@ public class Main extends Application {
 
         public static void connectToServer(){
             pauseDuring(1500, () -> {
-            wsClient = UtilsWS.getSharedInstance(logCtrl.getUrl());
+            wsClient = UtilsWS.getSharedInstance(ctrlLogin.getUrl());
 
             wsClient.onMessage((response) -> { 
                 Platform.runLater(() -> { 
@@ -92,9 +92,9 @@ public class Main extends Application {
                 if (wsClient != null && wsClient.isOpen()) {
                     JSONObject userInfo = new JSONObject();
                     userInfo.put("type", "userInfo");
-                    userInfo.put("userName", logCtrl.getUserName().trim()); // Usar el nombre ingresado
+                    userInfo.put("userName", ctrlLogin.getUserName().trim()); // Usar el nombre ingresado
                     wsClient.safeSend(userInfo.toString());
-                    System.out.println("Enviando nombre de usuario: " + logCtrl.getUserName().trim());
+                    System.out.println("Enviando nombre de usuario: " + ctrlLogin.getUserName().trim());
                 } 
             });
         });

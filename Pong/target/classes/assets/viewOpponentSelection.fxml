@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane fx:id="anchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.client.CtrlOpponentSelection">
+   <children>
+      <VBox alignment="CENTER" spacing="30.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <padding>
+            <Insets top="40.0" />
+         </padding>
+         
+         <!-- Título -->
+         <Label fx:id="titleLabel" text="SELECCIÓ D'OPONENT" styleClass="title-label"></Label>
+         
+         <!-- Panel de selección -->
+         <VBox fx:id="selectionPanel" alignment="CENTER" fillWidth="false" prefHeight="400.0" prefWidth="600.0" spacing="20.0" styleClass="config-panel">
+            <padding>
+               <Insets bottom="20.0" left="25.0" right="25.0" top="20.0" />
+            </padding>
+            
+            <Label fx:id="lblStatus" text="Carregant jugadors..." styleClass="field-label"></Label>
+            
+            <!-- Lista de jugadores -->
+            <ListView fx:id="listPlayers" prefHeight="250.0" prefWidth="400.0" styleClass="players-list" />
+            
+            <!-- Instrucciones -->
+            <Label text="Fes doble click en un jugador per convidar" styleClass="instruction-label"></Label>
+         </VBox>
+      </VBox>
+   </children>
+</AnchorPane>

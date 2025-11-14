@@ -6,6 +6,7 @@ import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -13,11 +14,14 @@ import javafx.util.Duration;
 public class Main extends Application {
 
     public static CtrlLogin ctrlLogin;
-    public static CtrlWait ctrlWait;
+    public static CtrlOpponentSelection ctrlOpponentSelection; 
     public static UtilsWS wsClient;
 
+    // Variables para manejar invitaciones
+    public static boolean invitationPending = false;
+    public static String pendingOpponent = "";
+
     public static void main(String[] args) {
-        // Iniciar app JavaFX   
         launch(args);
     }
     
@@ -27,18 +31,30 @@ public class Main extends Application {
             final int windowWidth = 1200;
             final int windowHeight = 650;
 
-            // Mensaje de configuración
             System.out.println("Sistema de configuración activado");
-            System.out.println("Los datos se guardarán en: " + System.getProperty("user.home") + "/Desktop/pong_config.json");
 
             UtilsViews.parentContainer.setStyle("-fx-font: 14 arial;");
-            UtilsViews.addView(getClass(), "ViewLogin", "/assets/viewLogin.fxml");
-            UtilsViews.addView(getClass(), "ViewWait", "/assets/viewWait.fxml");
-
-            ctrlLogin = (CtrlLogin) UtilsViews.getController("ViewLogin");
-            ctrlWait = (CtrlWait) UtilsViews.getController("ViewWait");
-
             
+            // Cargar solo las vistas necesarias
+            try {
+                UtilsViews.addView(getClass(), "ViewLogin", "/assets/viewLogin.fxml");
+                ctrlLogin = (CtrlLogin) UtilsViews.getController("ViewLogin");
+                System.out.println("✅ Vista Login cargada correctamente");
+            } catch (Exception e) {
+                System.err.println("❌ Error cargando ViewLogin: " + e.getMessage());
+                showErrorAndExit("No se pudo cargar la vista de login");
+                return;
+            }
+            
+            try {
+                UtilsViews.addView(getClass(), "ViewOpponentSelection", "/assets/viewOpponentSelection.fxml");
+                ctrlOpponentSelection = (CtrlOpponentSelection) UtilsViews.getController("ViewOpponentSelection");
+                System.out.println("✅ Vista OpponentSelection cargada correctamente");
+            } catch (Exception e) {
+                System.err.println("❌ Error cargando ViewOpponentSelection: " + e.getMessage());
+                System.err.println("La funcionalidad de selección de oponente no estará disponible");
+            }
+
             Scene scene = new Scene(UtilsViews.parentContainer, windowWidth, windowHeight);
 
             UtilsViews.setStage(stage);
@@ -47,9 +63,8 @@ public class Main extends Application {
             stage.setMinWidth(windowWidth);
             stage.setMinHeight(windowHeight);
             
-            // Add icon (fixed path)
             try {
-                Image icon = new Image(getClass().getResourceAsStream("/icons/icon.png"));
+                Image icon = new Image(getClass().getResourceAsStream("/assets/icon.png"));
                 stage.getIcons().add(icon);
             } catch (Exception e) {
                 System.err.println("No se pudo cargar el icono: " + e.getMessage());
@@ -58,27 +73,37 @@ public class Main extends Application {
             stage.show();
 
         } catch (Exception e) {
-            System.err.println("Error no controlado: " + e.getMessage());
+            System.err.println("Error no controlado en start: " + e.getMessage());
             e.printStackTrace();
+            showErrorAndExit("Error crítico al iniciar la aplicación");
         }
     }
 
-      @Override
-        public void stop() { 
-            if (wsClient != null) {
-                wsClient.forceExit();
-            }
-            System.exit(1); // kill executors
-        }
-        
-        public static void pauseDuring(long milliseconds, Runnable action) {
-            PauseTransition pause = new PauseTransition(Duration.millis(milliseconds));
-            pause.setOnFinished(event -> Platform.runLater(action));
-            pause.play();
-        }
+    private void showErrorAndExit(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error Crítico");
+        alert.setHeaderText(null);
+        alert.setContentText(message + "\nLa aplicación se cerrará.");
+        alert.showAndWait();
+        Platform.exit();
+    }
 
-        public static void connectToServer(){
-            pauseDuring(1500, () -> {
+    @Override
+    public void stop() { 
+        if (wsClient != null) {
+            wsClient.forceExit();
+        }
+        System.exit(0);
+    }
+    
+    public static void pauseDuring(long milliseconds, Runnable action) {
+        PauseTransition pause = new PauseTransition(Duration.millis(milliseconds));
+        pause.setOnFinished(event -> Platform.runLater(action));
+        pause.play();
+    }
+
+    public static void connectToServer(){
+        pauseDuring(1500, () -> {
             wsClient = UtilsWS.getSharedInstance(ctrlLogin.getUrl());
 
             wsClient.onMessage((response) -> { 
@@ -87,21 +112,152 @@ public class Main extends Application {
                 }); 
             });
             
-            // Enviar información del usuario después de conectar
             pauseDuring(2000, () -> {
                 if (wsClient != null && wsClient.isOpen()) {
                     JSONObject userInfo = new JSONObject();
                     userInfo.put("type", "userInfo");
-                    userInfo.put("userName", ctrlLogin.getUserName().trim()); // Usar el nombre ingresado
+                    userInfo.put("userName", ctrlLogin.getUserName().trim());
                     wsClient.safeSend(userInfo.toString());
                     System.out.println("Enviando nombre de usuario: " + ctrlLogin.getUserName().trim());
+                    
+                    // Cambiar DIRECTAMENTE a vista de selección de oponente
+                    pauseDuring(1000, () -> {
+                        if (ctrlOpponentSelection != null) {
+                            UtilsViews.setViewAnimating("ViewOpponentSelection");
+                            requestPlayersList();
+                        } else {
+                            System.out.println("Vista de selección de oponente no disponible");
+                        }
+                    });
                 } 
             });
         });
-    }    
-
-    private static void wsMessage(String response) {
-        // URL: wss://matrixplay1.ieti.site:443
     }
-      
+    
+    private static void requestPlayersList() {
+        try {
+            JSONObject request = new JSONObject();
+            request.put("type", "getPlayers");
+            if (wsClient != null && wsClient.isOpen()) {
+                wsClient.safeSend(request.toString());
+                System.out.println("Solicitando lista de jugadores...");
+            }
+        } catch (Exception e) {
+            System.err.println("Error solicitando lista de jugadores: " + e.getMessage());
+        }
+    }
+    
+    private static void wsMessage(String response) {
+        try {
+            System.out.println("Mensaje recibido: " + response);
+            JSONObject json = new JSONObject(response);
+            String type = json.optString("type", "");
+            
+            switch (type) {
+                case "playersList":
+                    if (ctrlOpponentSelection != null && json.has("players")) {
+                        java.util.List<Object> playersList = json.getJSONArray("players").toList();
+                        String[] players = playersList.toArray(new String[0]);
+                        ctrlOpponentSelection.updatePlayersList(players);
+                    }
+                    break;
+                    
+                case "clientInvite":
+                    String fromPlayer = json.optString("from", "");
+                    if (!fromPlayer.isEmpty() && ctrlOpponentSelection != null) {
+                        ctrlOpponentSelection.handleIncomingInvitation(fromPlayer);
+                    }
+                    break;
+                    
+                case "invitationResponse":
+                    boolean accepted = json.optBoolean("accepted", false);
+                    String responder = json.optString("from", "");
+                    String toPlayer = json.optString("to", "");
+                    
+                    if (toPlayer.equals(ctrlLogin.getUserName())) {
+                        if (accepted) {
+                            System.out.println(responder + " aceptó la invitación.");
+                            if (ctrlOpponentSelection != null) {
+                                ctrlOpponentSelection.updateStatus("¡" + responder + " aceptó! Iniciando partida...");
+                                clearInvitationState();
+                            }
+                        } else {
+                            System.out.println(responder + " rechazó la invitación");
+                            if (ctrlOpponentSelection != null) {
+                                ctrlOpponentSelection.updateStatus(responder + " rechazó tu invitación");
+                                clearInvitationState();
+                                requestPlayersList();
+                            }
+                        }
+                    }
+                    break;
+                    
+                default:
+                    System.out.println("Mensaje no manejado - Tipo: " + type);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error procesando mensaje: " + e.getMessage());
+        }
+    }
+    
+    // Métodos estáticos para manejar invitaciones
+    public static void acceptInvitation(String fromPlayer) {
+        try {
+            JSONObject response = new JSONObject();
+            response.put("type", "invitationResponse");
+            response.put("to", fromPlayer);
+            response.put("from", ctrlLogin.getUserName());
+            response.put("accepted", true);
+            
+            if (wsClient != null && wsClient.isOpen()) {
+                wsClient.safeSend(response.toString());
+            }
+        } catch (Exception e) {
+            System.err.println("Error aceptando invitación: " + e.getMessage());
+        }
+    }
+    
+    public static void rejectInvitation(String fromPlayer) {
+        try {
+            JSONObject response = new JSONObject();
+            response.put("type", "invitationResponse");
+            response.put("to", fromPlayer);
+            response.put("from", ctrlLogin.getUserName());
+            response.put("accepted", false);
+            
+            if (wsClient != null && wsClient.isOpen()) {
+                wsClient.safeSend(response.toString());
+            }
+        } catch (Exception e) {
+            System.err.println("Error rechazando invitación: " + e.getMessage());
+        }
+    }
+    
+    public static void startInvitationTimeout(String opponentName) {
+        new Thread(() -> {
+            try {
+                Thread.sleep(30000);
+                
+                Platform.runLater(() -> {
+                    if (invitationPending && pendingOpponent.equals(opponentName)) {
+                        invitationPending = false;
+                        pendingOpponent = "";
+                        
+                        if (ctrlOpponentSelection != null) {
+                            ctrlOpponentSelection.updateStatus("Invitación expirada. Selecciona otro jugador.");
+                            requestPlayersList();
+                        }
+                    }
+                });
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+    
+    public static void clearInvitationState() {
+        invitationPending = false;
+        pendingOpponent = "";
+    }
 }

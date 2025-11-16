@@ -188,6 +188,4 @@ public class UtilsViews {
         // Remove focus from buttons
         parentContainer.requestFocus();
     }
-
-    
 }

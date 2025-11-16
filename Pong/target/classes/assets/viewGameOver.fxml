@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane fx:id="gameOverContainer" minHeight="700.0" minWidth="1200.0" style="-fx-background-color: #000000;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.client.CtrlGameOver">
+   <children>
+      <VBox alignment="CENTER" spacing="40.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+         <padding>
+            <Insets top="80.0" />
+         </padding>
+         
+         <!-- Título GAME OVER -->
+         <Label fx:id="gameOverLabel" text="GAME OVER" style="-fx-text-fill: #ff0000;">
+            <font>
+               <Font name="8bitOperatorPlus8-Regular" size="64.0" />
+            </font>
+         </Label>
+         
+         <!-- Ganador -->
+         <VBox alignment="CENTER" spacing="20.0" style="-fx-background-color: #1a1a1a; -fx-border-color: #ffffff; -fx-border-width: 2; -fx-padding: 30;" prefWidth="600.0">
+            <Label text="GANADOR" style="-fx-text-fill: #ffffff;">
+               <font>
+                  <Font name="8bitOperatorPlus8-Regular" size="24.0" />
+               </font>
+            </Label>
+            <Label fx:id="winnerLabel" text="JUGADOR 1" style="-fx-text-fill: #ffcc00;">
+               <font>
+                  <Font name="8bitOperatorPlus8-Regular" size="36.0" />
+               </font>
+            </Label>
+            
+            <!-- Puntuación final -->
+            <HBox alignment="CENTER" spacing="50.0">
+               <VBox alignment="CENTER" spacing="5.0">
+                  <Label text="JUGADOR 1" style="-fx-text-fill: #ffffff;">
+                     <font>
+                        <Font name="8bitOperatorPlus8-Regular" size="14.0" />
+                     </font>
+                  </Label>
+                  <Label fx:id="finalScore1" text="5" style="-fx-text-fill: #ffffff;">
+                     <font>
+                        <Font name="8bitOperatorPlus8-Regular" size="24.0" />
+                     </font>
+                  </Label>
+               </VBox>
+               
+               <Label text="-" style="-fx-text-fill: #ffffff;">
+                  <font>
+                     <Font name="8bitOperatorPlus8-Regular" size="24.0" />
+                  </font>
+               </Label>
+               
+               <VBox alignment="CENTER" spacing="5.0">
+                  <Label text="JUGADOR 2" style="-fx-text-fill: #ffffff;">
+                     <font>
+                        <Font name="8bitOperatorPlus8-Regular" size="14.0" />
+                     </font>
+                  </Label>
+                  <Label fx:id="finalScore2" text="3" style="-fx-text-fill: #ffffff;">
+                     <font>
+                        <Font name="8bitOperatorPlus8-Regular" size="24.0" />
+                     </font>
+                  </Label>
+               </VBox>
+            </HBox>
+         </VBox>
+         
+         <!-- Botones de acción -->
+         <HBox alignment="CENTER" spacing="50.0">
+            <Button fx:id="rematchButton" onAction="#handleRematch" prefHeight="50.0" prefWidth="200.0" text="REVANCHA">
+               <font>
+                  <Font name="8bitOperatorPlus8-Regular" size="16.0" />
+               </font>
+            </Button>
+            
+            <Button fx:id="returnButton" onAction="#handleReturnToLobby" prefHeight="50.0" prefWidth="200.0" text="VOLVER AL LOBBY">
+               <font>
+                  <Font name="8bitOperatorPlus8-Regular" size="16.0" />
+               </font>
+            </Button>
+         </HBox>
+         
+         <!-- Estado de revancha -->
+         <VBox fx:id="rematchStatus" alignment="CENTER" spacing="10.0" visible="false">
+            <Label fx:id="rematchStatusLabel" text="ESPERANDO RESPUESTA..." style="-fx-text-fill: #ffff00;">
+               <font>
+                  <Font name="8bitOperatorPlus8-Regular" size="14.0" />
+               </font>
+            </Label>
+            <Label text="El oponente tiene 30 segundos para aceptar" style="-fx-text-fill: #666666;">
+               <font>
+                  <Font name="8bitOperatorPlus8-Regular" size="12.0" />
+               </font>
+            </Label>
+         </VBox>
+         
+         <!-- Footer -->
+         <VBox alignment="CENTER" spacing="5.0" VBox.vgrow="ALWAYS">
+            <Label text="ARCADE SYSTEM" style="-fx-text-fill: #333333;">
+               <font>
+                  <Font name="8bitOperatorPlus8-Regular" size="12.0" />
+               </font>
+            </Label>
+            <Label text="INSERT COIN TO CONTINUE" style="-fx-text-fill: #666666;">
+               <font>
+                  <Font name="8bitOperatorPlus8-Regular" size="10.0" />
+               </font>
+            </Label>
+         </VBox>
+      </VBox>
+   </children>
+</AnchorPane>

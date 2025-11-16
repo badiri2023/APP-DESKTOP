@@ -1,5 +1,7 @@
 package com.client;
 
+import java.util.Arrays;
+
 import org.json.JSONObject;
 
 import javafx.animation.PauseTransition;
@@ -53,6 +55,27 @@ public class Main extends Application {
             } catch (Exception e) {
                 System.err.println("❌ Error cargando ViewOpponentSelection: " + e.getMessage());
                 System.err.println("La funcionalidad de selección de oponente no estará disponible");
+            }
+
+            try {
+                UtilsViews.addView(getClass(), "ViewLoading", "/assets/viewLoading.fxml");
+                System.out.println("✅ Vista Loading cargada correctamente");
+            } catch (Exception e) {
+                System.err.println("❌ Error cargando ViewLoading: " + e.getMessage());
+            }
+
+            try {
+                UtilsViews.addView(getClass(), "ViewGame", "/assets/viewGame.fxml");
+                System.out.println("✅ Vista Game cargada correctamente");
+            } catch (Exception e) {
+                System.err.println("❌ Error cargando ViewGame: " + e.getMessage());
+            }
+
+            try {
+                UtilsViews.addView(getClass(), "ViewGameOver", "/assets/viewGameOver.fxml");
+                System.out.println("✅ Vista GameOver cargada correctamente");
+            } catch (Exception e) {
+                System.err.println("❌ Error cargando ViewGameOver: " + e.getMessage());
             }
 
             Scene scene = new Scene(UtilsViews.parentContainer, windowWidth, windowHeight);
@@ -134,7 +157,7 @@ public class Main extends Application {
         });
     }
     
-    private static void requestPlayersList() {
+    public static void requestPlayersList() {
         try {
             JSONObject request = new JSONObject();
             request.put("type", "getPlayers");
@@ -149,47 +172,79 @@ public class Main extends Application {
     
     private static void wsMessage(String response) {
         try {
-            System.out.println("Mensaje recibido: " + response);
+            System.out.println("Mensaje recibido del servidor: " + response);
             JSONObject json = new JSONObject(response);
             String type = json.optString("type", "");
             
             switch (type) {
+                case "welcome":
+                    // ✅ MOSTRAR ALERT DE BIENVENIDA
+                    String welcomeMsg = json.optString("message", "¡Bienvenido al servidor PONG!");
+                    Platform.runLater(() -> {
+                        showAlert("Bienvenida", welcomeMsg);
+                    });
+                    break;
+                    
+                case "userRegistered":
+                    // ✅ MOSTRAR ALERT DE REGISTRO EXITOSO
+                    String regMsg = json.optString("message", "Registro exitoso");
+                    Platform.runLater(() -> {
+                        showAlert("Registro Exitoso", regMsg);
+                    });
+                    break;
+                    
                 case "playersList":
                     if (ctrlOpponentSelection != null && json.has("players")) {
                         java.util.List<Object> playersList = json.getJSONArray("players").toList();
                         String[] players = playersList.toArray(new String[0]);
                         ctrlOpponentSelection.updatePlayersList(players);
+                        
+                        // ✅ MOSTRAR ALERT CON LISTA ACTUALIZADA
+                        String listMsg = json.optString("message", "Lista de jugadores actualizada");
+                        Platform.runLater(() -> {
+                            showAlert("Jugadores Conectados", listMsg + "\nJugadores: " + Arrays.toString(players));
+                        });
                     }
                     break;
                     
                 case "clientInvite":
                     String fromPlayer = json.optString("from", "");
+                    String inviteMsg = json.optString("message", "Invitación recibida");
                     if (!fromPlayer.isEmpty() && ctrlOpponentSelection != null) {
                         ctrlOpponentSelection.handleIncomingInvitation(fromPlayer);
+                        
+                        // ✅ EL ALERT DE INVITACIÓN YA SE MANEJA EN handleIncomingInvitation
                     }
                     break;
                     
                 case "invitationResponse":
                     boolean accepted = json.optBoolean("accepted", false);
                     String responder = json.optString("from", "");
-                    String toPlayer = json.optString("to", "");
+                    String responseMsg = json.optString("message", "Respuesta a invitación");
                     
-                    if (toPlayer.equals(ctrlLogin.getUserName())) {
-                        if (accepted) {
-                            System.out.println(responder + " aceptó la invitación.");
-                            if (ctrlOpponentSelection != null) {
-                                ctrlOpponentSelection.updateStatus("¡" + responder + " aceptó! Iniciando partida...");
-                                clearInvitationState();
-                            }
-                        } else {
-                            System.out.println(responder + " rechazó la invitación");
-                            if (ctrlOpponentSelection != null) {
-                                ctrlOpponentSelection.updateStatus(responder + " rechazó tu invitación");
-                                clearInvitationState();
-                                requestPlayersList();
-                            }
-                        }
+                    if (accepted) {
+                        Platform.runLater(() -> {
+                            showAlert("Invitación Aceptada", responseMsg);
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            showAlert("Invitación Rechazada", responseMsg);
+                        });
                     }
+                    break;
+                    
+                case "gameStart":
+                    String gameMsg = json.optString("message", "Partida iniciada");
+                    Platform.runLater(() -> {
+                        showAlert("¡Partida Iniciada!", gameMsg);
+                    });
+                    break;
+                    
+                case "error":
+                    String errorMsg = json.optString("message", "Error del servidor");
+                    Platform.runLater(() -> {
+                        showAlert("Error", errorMsg);
+                    });
                     break;
                     
                 default:
@@ -199,6 +254,15 @@ public class Main extends Application {
         } catch (Exception e) {
             System.err.println("Error procesando mensaje: " + e.getMessage());
         }
+    }
+
+    // Método auxiliar para mostrar alerts
+    private static void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
     
     // Métodos estáticos para manejar invitaciones

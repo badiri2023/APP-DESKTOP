@@ -77,7 +77,7 @@ public class CtrlLogin implements Initializable {
         
         // Título PONG
         if (titleLabel != null) {
-            titleLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 48));
+            titleLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 70));
             titleLabel.setTextFill(Color.WHITE);
             titleLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.8), 10, 0, 0, 0);");
         }
@@ -272,6 +272,11 @@ public class CtrlLogin implements Initializable {
             return;
         }
 
+        // Asegurarse de que la URL tenga el protocolo WebSocket
+        if (!url.startsWith("ws://") && !url.startsWith("wss://")) {
+            url = "ws://" + url;
+        }
+
         saveConfig();
         setConnectingState();
 
@@ -281,9 +286,9 @@ public class CtrlLogin implements Initializable {
                 
                 Platform.runLater(() -> {
                     setConnectedState();
+                    // Solo conectar al servidor, NO cambiar vista aquí
                     Main.connectToServer();
-                    showAlert("Connexió Exitosa", "Connectat com: " + playerName + "\n" + "Servidor: " + url);
-                    UtilsViews.setViewAnimating("ViewWait");
+                    // El cambio de vista lo hará el servidor cuando confirme la conexión
                 });
                 
             } catch (InterruptedException ex) {

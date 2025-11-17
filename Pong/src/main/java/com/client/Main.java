@@ -31,7 +31,7 @@ public class Main extends Application {
     public void start(Stage stage) throws Exception {
         try {
             final int windowWidth = 1200;
-            final int windowHeight = 650;
+            final int windowHeight = 700;
 
             System.out.println("Sistema de configuración activado");
 
@@ -127,7 +127,13 @@ public class Main extends Application {
 
     public static void connectToServer(){
         pauseDuring(1500, () -> {
-            wsClient = UtilsWS.getSharedInstance(ctrlLogin.getUrl());
+            String url = ctrlLogin.getUrl();
+            if (url == null || url.isEmpty()) {
+                System.err.println("URL del servidor no válida");
+                return;
+            }
+            
+            wsClient = UtilsWS.getSharedInstance(url);
 
             wsClient.onMessage((response) -> { 
                 Platform.runLater(() -> { 
@@ -135,6 +141,7 @@ public class Main extends Application {
                 }); 
             });
             
+            // Esperar a que la conexión se establezca
             pauseDuring(2000, () -> {
                 if (wsClient != null && wsClient.isOpen()) {
                     JSONObject userInfo = new JSONObject();
@@ -143,16 +150,26 @@ public class Main extends Application {
                     wsClient.safeSend(userInfo.toString());
                     System.out.println("Enviando nombre de usuario: " + ctrlLogin.getUserName().trim());
                     
-                    // Cambiar DIRECTAMENTE a vista de selección de oponente
+                    // Cambiar a vista de selección de oponente
                     pauseDuring(1000, () -> {
                         if (ctrlOpponentSelection != null) {
                             UtilsViews.setViewAnimating("ViewOpponentSelection");
                             requestPlayersList();
                         } else {
-                            System.out.println("Vista de selección de oponente no disponible");
+                            System.err.println("Vista de selección de oponente no disponible");
                         }
                     });
-                } 
+                } else {
+                    System.err.println("No se pudo establecer conexión WebSocket");
+                    // Mostrar error al usuario
+                    Platform.runLater(() -> {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Error de Conexión");
+                        alert.setHeaderText(null);
+                        alert.setContentText("No se pudo conectar al servidor: " + url);
+                        alert.showAndWait();
+                    });
+                }
             });
         });
     }
@@ -178,10 +195,13 @@ public class Main extends Application {
             
             switch (type) {
                 case "welcome":
-                    // ✅ MOSTRAR ALERT DE BIENVENIDA
+                    // ✅ MOSTRAR ALERT DE BIENVENIDA Y CAMBIAR A OPPONENT SELECTION
                     String welcomeMsg = json.optString("message", "¡Bienvenido al servidor PONG!");
                     Platform.runLater(() -> {
                         showAlert("Bienvenida", welcomeMsg);
+                        // SOLO CAMBIAR VISTA CUANDO EL SERVIDOR CONFIRME LA CONEXIÓN
+                        UtilsViews.setViewAnimating("ViewOpponentSelection");
+                        requestPlayersList();
                     });
                     break;
                     
@@ -198,12 +218,6 @@ public class Main extends Application {
                         java.util.List<Object> playersList = json.getJSONArray("players").toList();
                         String[] players = playersList.toArray(new String[0]);
                         ctrlOpponentSelection.updatePlayersList(players);
-                        
-                        // ✅ MOSTRAR ALERT CON LISTA ACTUALIZADA
-                        String listMsg = json.optString("message", "Lista de jugadores actualizada");
-                        Platform.runLater(() -> {
-                            showAlert("Jugadores Conectados", listMsg + "\nJugadores: " + Arrays.toString(players));
-                        });
                     }
                     break;
                     
@@ -212,8 +226,6 @@ public class Main extends Application {
                     String inviteMsg = json.optString("message", "Invitación recibida");
                     if (!fromPlayer.isEmpty() && ctrlOpponentSelection != null) {
                         ctrlOpponentSelection.handleIncomingInvitation(fromPlayer);
-                        
-                        // ✅ EL ALERT DE INVITACIÓN YA SE MANEJA EN handleIncomingInvitation
                     }
                     break;
                     
@@ -225,6 +237,8 @@ public class Main extends Application {
                     if (accepted) {
                         Platform.runLater(() -> {
                             showAlert("Invitación Aceptada", responseMsg);
+                            // Cambiar a vista de loading cuando se acepte la invitación
+                            UtilsViews.setViewAnimating("ViewLoading");
                         });
                     } else {
                         Platform.runLater(() -> {
@@ -237,6 +251,15 @@ public class Main extends Application {
                     String gameMsg = json.optString("message", "Partida iniciada");
                     Platform.runLater(() -> {
                         showAlert("¡Partida Iniciada!", gameMsg);
+                        // Cambiar a vista de loading y luego al juego
+                        UtilsViews.setViewAnimating("ViewLoading");
+                        CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
+                        if (ctrlLoading != null) {
+                            ctrlLoading.startLoadingAnimation(() -> {
+                                // Cuando termine la carga, ir al juego
+                                UtilsViews.setViewAnimating("ViewGame");
+                            });
+                        }
                     });
                     break;
                     

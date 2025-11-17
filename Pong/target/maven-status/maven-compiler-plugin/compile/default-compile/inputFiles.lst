@@ -1,7 +1,10 @@
 /home/super/Documents/GitHub/APP-DESKTOP/Pong/src/main/java/com/client/CtrlWait.java
 /home/super/Documents/GitHub/APP-DESKTOP/Pong/src/main/java/com/shared/ClientData.java
 /home/super/Documents/GitHub/APP-DESKTOP/Pong/src/main/java/com/client/CountdCtrl.java
+/home/super/Documents/GitHub/APP-DESKTOP/Pong/src/main/java/com/client/CtrlGame.java
 /home/super/Documents/GitHub/APP-DESKTOP/Pong/src/main/java/com/client/CtrlOpponentSelection.java
+/home/super/Documents/GitHub/APP-DESKTOP/Pong/src/main/java/com/client/CtrlLoading.java
+/home/super/Documents/GitHub/APP-DESKTOP/Pong/src/main/java/com/client/CtrlGameOver.java
 /home/super/Documents/GitHub/APP-DESKTOP/Pong/src/main/java/com/client/Main.java
 /home/super/Documents/GitHub/APP-DESKTOP/Pong/src/main/java/com/client/Config.java
 /home/super/Documents/GitHub/APP-DESKTOP/Pong/src/main/java/com/client/CtrlLogin.java

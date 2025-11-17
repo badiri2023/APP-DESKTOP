@@ -33,7 +33,8 @@ public class CtrlLoading implements Initializable {
             }
             
             applyStyles();
-            startLoadingAnimation();
+            // NO iniciar la animación automáticamente - solo cuando se solicite
+            // startLoadingAnimation();
             
         } catch (Exception e) {
             System.err.println("Error en CtrlLoading: " + e.getMessage());
@@ -63,7 +64,11 @@ public class CtrlLoading implements Initializable {
         }
     }
     
-    private void startLoadingAnimation() {
+    // Este método debe llamarse explícitamente cuando se necesite
+    public void startLoadingAnimation(Runnable onFinished) {
+        // Reiniciar la barra de progreso
+        loadingBar.setProgress(0);
+        
         // Animación del texto
         Timeline textAnimation = new Timeline(
             new KeyFrame(Duration.ZERO, new KeyValue(loadingText.opacityProperty(), 1.0)),
@@ -80,8 +85,10 @@ public class CtrlLoading implements Initializable {
         );
         
         loadingTimeline.setOnFinished(event -> {
-            // Cuando termina la carga, pasar a la vista del juego
-            UtilsViews.setViewAnimating("ViewGame");
+            textAnimation.stop(); // Detener la animación del texto
+            if (onFinished != null) {
+                onFinished.run(); // Ejecutar el callback proporcionado
+            }
         });
         
         loadingTimeline.play();
@@ -100,8 +107,7 @@ public class CtrlLoading implements Initializable {
         loadingBar.setProgress(1.0);
     }
     
-    @Override
-    public void finalize() {
+    public void stopLoading() {
         if (loadingTimeline != null) {
             loadingTimeline.stop();
         }

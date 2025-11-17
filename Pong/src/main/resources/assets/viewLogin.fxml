@@ -42,7 +42,7 @@
          </VBox>
          
          <!-- Footer -->
-         <Label fx:id="footerLabel" text="ARCADE · 2025"></Label>
+         <Label fx:id="footerLabel" text="27 D · 2025"></Label>
       </VBox>
    </children>
 </AnchorPane>

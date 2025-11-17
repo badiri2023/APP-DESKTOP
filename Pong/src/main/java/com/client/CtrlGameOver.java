@@ -16,10 +16,10 @@ public class CtrlGameOver implements Initializable {
 
     @FXML private Label gameOverLabel;
     @FXML private Label winnerLabel;
-    @FXML private Button rematchButton;
-    @FXML private Button returnButton;
     @FXML private Label finalScore1;
     @FXML private Label finalScore2;
+    @FXML private Button rematchButton;
+    @FXML private Button returnButton;
     @FXML private VBox rematchStatus;
     @FXML private Label rematchStatusLabel;
     
@@ -59,6 +59,17 @@ public class CtrlGameOver implements Initializable {
             winnerLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.8), 5, 0, 0, 0);");
         }
         
+        // Estilo de las puntuaciones
+        if (finalScore1 != null) {
+            finalScore1.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 24));
+            finalScore1.setTextFill(Color.WHITE);
+        }
+        
+        if (finalScore2 != null) {
+            finalScore2.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 24));
+            finalScore2.setTextFill(Color.WHITE);
+        }
+        
         // Estilo de botones
         applyButtonStyle(rematchButton);
         applyButtonStyle(returnButton);
@@ -75,7 +86,7 @@ public class CtrlGameOver implements Initializable {
                 "-fx-border-radius: 5; " +
                 "-fx-background-radius: 5; " +
                 "-fx-pref-width: 200; " +
-                "-fx-pref-height: 40;"
+                "-fx-pref-height: 50;"
             );
             
             // Efecto hover
@@ -89,7 +100,7 @@ public class CtrlGameOver implements Initializable {
                         "-fx-border-radius: 5; " +
                         "-fx-background-radius: 5; " +
                         "-fx-pref-width: 200; " +
-                        "-fx-pref-height: 40;"
+                        "-fx-pref-height: 50;"
                     );
                 }
             });
@@ -124,6 +135,7 @@ public class CtrlGameOver implements Initializable {
         }
     }
     
+    @FXML
     private void handleRematch() {
         if (!rematchProposed) {
             // Proponer revancha
@@ -131,8 +143,27 @@ public class CtrlGameOver implements Initializable {
             rematchButton.setText("ESPERANDO...");
             rematchButton.setDisable(true);
             
+            if (rematchStatus != null) {
+                rematchStatus.setVisible(true);
+            }
+            
             // Enviar solicitud de revancha al servidor
             sendRematchRequest();
+        }
+    }
+    
+    @FXML
+    private void handleReturnToLobby() {
+        // Volver al lobby de jugadores
+        UtilsViews.setView("ViewOpponentSelection");
+        
+        // Limpiar estado de revancha
+        rematchProposed = false;
+        rematchAccepted = false;
+        
+        // Actualizar lista de jugadores
+        if (Main.ctrlOpponentSelection != null) {
+            Main.requestPlayersList();
         }
     }
     
@@ -161,20 +192,6 @@ public class CtrlGameOver implements Initializable {
             // El oponente rechazó la revancha
             rematchButton.setDisable(true);
             rematchButton.setText("REVANCHA RECHAZADA");
-        }
-    }
-    
-    private void handleReturnToLobby() {
-        // Volver al lobby de jugadores
-        UtilsViews.setViewAnimating("ViewOpponentSelection");
-        
-        // Limpiar estado de revancha
-        rematchProposed = false;
-        rematchAccepted = false;
-        
-        // Actualizar lista de jugadores
-        if (Main.ctrlOpponentSelection != null) {
-            Main.requestPlayersList();
         }
     }
     

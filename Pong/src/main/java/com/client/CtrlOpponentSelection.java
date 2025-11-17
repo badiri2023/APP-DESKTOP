@@ -17,6 +17,8 @@ import javafx.scene.text.FontWeight;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class CtrlOpponentSelection implements Initializable {
@@ -176,11 +178,12 @@ public class CtrlOpponentSelection implements Initializable {
         }
     }
     
-    public void updatePlayersList(String[] players) {
+    // ✅ NUEVO MÉTODO para manejar JSONArray (como la Raspberry Pi)
+    public void updatePlayersList(JSONArray playersArray) {
         Platform.runLater(() -> {
-            System.out.println("Actualizando lista de jugadores...");
+            System.out.println("Actualizando lista de jugadores desde JSONArray...");
             
-            if (players == null) {
+            if (playersArray == null) {
                 lblStatus.setText("Error: datos no disponibles");
                 listPlayers.getItems().clear();
                 return;
@@ -192,19 +195,26 @@ public class CtrlOpponentSelection implements Initializable {
             int availablePlayers = 0;
             String currentPlayer = Main.ctrlLogin.getUserName();
             
-            for (String player : players) {
-                // Solo mostrar jugadores que no sean yo mismo
-                if (player != null && !player.equals(currentPlayer) && !player.isEmpty()) {
-                    listPlayers.getItems().add(player);
-                    availablePlayers++;
-                    System.out.println("Añadido jugador: " + player);
+            // Procesar el JSONArray igual que en la Raspberry Pi
+            for (int i = 0; i < playersArray.length(); i++) {
+                try {
+                    String player = playersArray.getString(i);
+                    
+                    // Solo mostrar jugadores que no sean yo mismo
+                    if (player != null && !player.equals(currentPlayer) && !player.isEmpty()) {
+                        listPlayers.getItems().add(player);
+                        availablePlayers++;
+                        System.out.println("Añadido jugador: " + player);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error procesando jugador en índice " + i + ": " + e.getMessage());
                 }
             }
             
             // Actualizar el mensaje de estado
             if (availablePlayers == 0) {
                 lblStatus.setText("No hay otros jugadores conectados");
-                lblStatus.setTextFill(Color.rgb(255, 100, 100)); // Rojo suave
+                lblStatus.setTextFill(Color.rgb(255, 100, 100));
             } else {
                 lblStatus.setText(availablePlayers + " jugador(es) disponible(s). Haz doble click para invitar.");
                 lblStatus.setTextFill(Color.WHITE);

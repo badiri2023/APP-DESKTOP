@@ -37,7 +37,7 @@ public class CtrlLogin implements Initializable {
     @FXML private TextField urlField;
     @FXML private Button connectButton;
 
-    private Font retroFont;
+    public Font retroFont;
     public static String playerName;
     public static String url;
 

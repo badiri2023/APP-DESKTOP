@@ -2,6 +2,7 @@ package com.client;
 
 import java.util.Arrays;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javafx.animation.PauseTransition;
@@ -9,7 +10,11 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.image.Image;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -103,11 +108,7 @@ public class Main extends Application {
     }
 
     private void showErrorAndExit(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error Crítico");
-        alert.setHeaderText(null);
-        alert.setContentText(message + "\nLa aplicación se cerrará.");
-        alert.showAndWait();
+        showAlert("Error Crítico", message + "\nLa aplicación se cerrará.", AlertType.ERROR);
         Platform.exit();
     }
 
@@ -163,11 +164,7 @@ public class Main extends Application {
                     System.err.println("No se pudo establecer conexión WebSocket");
                     // Mostrar error al usuario
                     Platform.runLater(() -> {
-                        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setTitle("Error de Conexión");
-                        alert.setHeaderText(null);
-                        alert.setContentText("No se pudo conectar al servidor: " + url);
-                        alert.showAndWait();
+                        showAlert("Error de Conexión", "No se pudo conectar al servidor: " + url, AlertType.ERROR);
                     });
                 }
             });
@@ -198,7 +195,7 @@ public class Main extends Application {
                     // ✅ MOSTRAR ALERT DE BIENVENIDA Y CAMBIAR A OPPONENT SELECTION
                     String welcomeMsg = json.optString("message", "¡Bienvenido al servidor PONG!");
                     Platform.runLater(() -> {
-                        showAlert("Bienvenida", welcomeMsg);
+                        showAlert("Bienvenida", welcomeMsg, AlertType.INFORMATION);
                         // SOLO CAMBIAR VISTA CUANDO EL SERVIDOR CONFIRME LA CONEXIÓN
                         UtilsViews.setViewAnimating("ViewOpponentSelection");
                         requestPlayersList();
@@ -209,17 +206,25 @@ public class Main extends Application {
                     // ✅ MOSTRAR ALERT DE REGISTRO EXITOSO
                     String regMsg = json.optString("message", "Registro exitoso");
                     Platform.runLater(() -> {
-                        showAlert("Registro Exitoso", regMsg);
+                        showAlert("Registro Exitoso", regMsg, AlertType.INFORMATION);
                     });
                     break;
                     
-                case "playersList":
-                    if (ctrlOpponentSelection != null && json.has("players")) {
-                        java.util.List<Object> playersList = json.getJSONArray("players").toList();
-                        String[] players = playersList.toArray(new String[0]);
-                        ctrlOpponentSelection.updatePlayersList(players);
+                case "clients":  // ✅ NUEVO CASO - IGUAL QUE LA RASPBERRY PI
+                    if (ctrlOpponentSelection != null && json.has("list")) {
+                        JSONArray playersArray = json.getJSONArray("list");
+                        ctrlOpponentSelection.updatePlayersList(playersArray);
+                        System.out.println("Lista de clientes recibida: " + playersArray.length() + " jugadores");
                     }
                     break;
+                    
+                // case "playersList":  // ✅ MANTENER POR COMPATIBILIDAD
+                //     if (ctrlOpponentSelection != null && json.has("players")) {
+                //         java.util.List<Object> playersList = json.getJSONArray("players").toList();
+                //         String[] players = playersList.toArray(new String[0]);
+                //         ctrlOpponentSelection.updatePlayersList(players);
+                //     }
+                //     break;
                     
                 case "clientInvite":
                     String fromPlayer = json.optString("from", "");
@@ -236,13 +241,13 @@ public class Main extends Application {
                     
                     if (accepted) {
                         Platform.runLater(() -> {
-                            showAlert("Invitación Aceptada", responseMsg);
+                            showAlert("Invitación Aceptada", responseMsg, AlertType.INFORMATION);
                             // Cambiar a vista de loading cuando se acepte la invitación
                             UtilsViews.setViewAnimating("ViewLoading");
                         });
                     } else {
                         Platform.runLater(() -> {
-                            showAlert("Invitación Rechazada", responseMsg);
+                            showAlert("Invitación Rechazada", responseMsg, AlertType.INFORMATION);
                         });
                     }
                     break;
@@ -250,7 +255,7 @@ public class Main extends Application {
                 case "gameStart":
                     String gameMsg = json.optString("message", "Partida iniciada");
                     Platform.runLater(() -> {
-                        showAlert("¡Partida Iniciada!", gameMsg);
+                        showAlert("¡Partida Iniciada!", gameMsg, AlertType.INFORMATION);
                         // Cambiar a vista de loading y luego al juego
                         UtilsViews.setViewAnimating("ViewLoading");
                         CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
@@ -262,11 +267,15 @@ public class Main extends Application {
                         }
                     });
                     break;
+                case "text":
+                    // ✅ NUEVO: Manejar mensajes de texto del servidor
+                    handleTextMessage(json);
+                    break;
                     
                 case "error":
                     String errorMsg = json.optString("message", "Error del servidor");
                     Platform.runLater(() -> {
-                        showAlert("Error", errorMsg);
+                        showAlert("Error", errorMsg, AlertType.INFORMATION);
                     });
                     break;
                     
@@ -279,13 +288,76 @@ public class Main extends Application {
         }
     }
 
-    // Método auxiliar para mostrar alerts
-    private static void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+    /**
+     * Maneja mensajes de texto del servidor con TTL (Time To Live)
+     */
+    private static void handleTextMessage(JSONObject json) {
+        String message = json.optString("message", "");
+        long ttlMs = json.optLong("ttl_ms", 5000); // Default 5 segundos
+        
+        if (!message.isEmpty()) {
+            Platform.runLater(() -> {
+                // Usar el método showAlert mejorado con auto-cierre
+                showAlert("Mensaje del Servidor", message, Alert.AlertType.INFORMATION, ttlMs);
+            });
+        }
+    }
+
+    // Método auxiliar para mostrar alerts (versión mejorada)
+    private static void showAlert(String title, String message, AlertType type) {
+        showAlert(title, message, type, 0); // Por defecto sin auto-cierre
+    }
+
+    private static void showAlert(String title, String message, AlertType type, long autoCloseMs) {
+        Alert alert = new Alert(type);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
-        alert.showAndWait();
+        applyAlertStyle(alert);
+        
+        if (autoCloseMs > 0) {
+            // Mostrar sin bloquear y cerrar automáticamente
+            alert.show();
+            PauseTransition delay = new PauseTransition(Duration.millis(autoCloseMs));
+            delay.setOnFinished(event -> {
+                if (alert.isShowing()) {
+                    alert.close();
+                }
+            });
+            delay.play();
+        } else {
+            // Mostrar de forma bloqueante (comportamiento original)
+            alert.showAndWait();
+        }
+    }
+
+    /**
+     * Aplica estilo retro a un Alert
+     */
+    private static void applyAlertStyle(Alert alert) {
+        alert.getDialogPane().setStyle(
+            "-fx-background-color: #000000; " +
+            "-fx-border-color: #ffffff; " +
+            "-fx-border-width: 3; " +
+            "-fx-border-radius: 5; " +
+            "-fx-background-radius: 5;"
+        );
+        
+        // Aplicar estilo a los botones
+        alert.getDialogPane().getButtonTypes().forEach(buttonType -> {
+            Button button = (Button) alert.getDialogPane().lookupButton(buttonType);
+            if (button != null && ctrlLogin != null && ctrlLogin.retroFont != null) {
+                button.setFont(Font.font(ctrlLogin.retroFont.getFamily(), FontWeight.BOLD, 12));
+                button.setStyle(
+                    "-fx-background-color: #ffffff; " +
+                    "-fx-text-fill: #000000; " +
+                    "-fx-background-radius: 3; " +
+                    "-fx-border-radius: 3; " +
+                    "-fx-border-color: #000000; " +
+                    "-fx-border-width: 1;"
+                );
+            }
+        });
     }
     
     // Métodos estáticos para manejar invitaciones

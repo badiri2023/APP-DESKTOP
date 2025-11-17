@@ -1,4 +1,5 @@
 com/client/CtrlLogin.class
+com/client/CtrlOpponentSelection$1.class
 com/client/Main.class
 com/client/CtrlOpponentSelection.class
 com/client/CtrlLoading.class

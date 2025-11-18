@@ -183,61 +183,40 @@ public class CtrlOpponentSelection implements Initializable {
 
     public void updatePlayersList(JSONArray playersArray) {
         Platform.runLater(() -> {
-            System.out.println("Actualizando lista de jugadores desde JSONArray...");
+            System.out.println("🔄 ACTUALIZANDO LISTA DE JUGADORES");
+            System.out.println("📊 Datos recibidos: " + playersArray.toString());
             
-            if (playersArray == null) {
-                lblStatus.setText("Error: datos no disponibles");
-                listPlayers.getItems().clear();
-                return;
-            }
-            
-            // Limpiar la lista actual
             listPlayers.getItems().clear();
             
             int availablePlayers = 0;
             String currentPlayer = Main.ctrlLogin.getUserName();
+            System.out.println("👤 Mi nombre: " + currentPlayer);
             
-            // Procesar el JSONArray y filtrar jugadores no disponibles
             for (int i = 0; i < playersArray.length(); i++) {
                 try {
                     String player = playersArray.getString(i);
+                    System.out.println("👥 Jugador en lista: " + player);
                     
-                    // ✅ FILTRAR: No mostrar al propio jugador
                     if (player.equals(currentPlayer)) {
+                        System.out.println("❌ Filtrado: soy yo mismo");
                         continue;
                     }
                     
-                    // ✅ FILTRAR: No mostrar la Raspberry Pi/Pantalla
                     if (isRaspberryPi(player)) {
-                        System.out.println("Ocultando Raspberry Pi: " + player);
+                        System.out.println("❌ Filtrado: es Raspberry Pi");
                         continue;
                     }
                     
-                    // ✅ FILTRAR: No mostrar jugadores vacíos
-                    if (player == null || player.isEmpty()) {
-                        continue;
-                    }
-                    
-                    // ✅ JUGADOR VÁLIDO - Añadir a la lista
                     listPlayers.getItems().add(player);
                     availablePlayers++;
-                    System.out.println("Añadido jugador: " + player);
+                    System.out.println("✅ Añadido a lista: " + player);
                     
                 } catch (Exception e) {
-                    System.err.println("Error procesando jugador en índice " + i + ": " + e.getMessage());
+                    System.err.println("Error procesando jugador: " + e.getMessage());
                 }
             }
             
-            // Actualizar el mensaje de estado
-            if (availablePlayers == 0) {
-                lblStatus.setText("No hay otros jugadores conectados");
-                lblStatus.setTextFill(Color.rgb(255, 100, 100));
-            } else {
-                lblStatus.setText(availablePlayers + " jugador(es) disponible(s). Haz doble click para invitar.");
-                lblStatus.setTextFill(Color.WHITE);
-            }
-            
-            System.out.println("Lista actualizada. Jugadores disponibles: " + availablePlayers);
+            System.out.println("🎯 Total jugadores disponibles: " + availablePlayers);
         });
     }
 
@@ -256,33 +235,28 @@ public class CtrlOpponentSelection implements Initializable {
     
     private void sendInvitation(String opponentName) {
         try {
+            String myName = Main.ctrlLogin.getUserName();
+            System.out.println("🎯 ENVIANDO INVITACIÓN: De " + myName + " para " + opponentName);
+            
             JSONObject invitation = new JSONObject();
-            invitation.put("type", "challenge"); // 
+            invitation.put("type", "challenge");
             invitation.put("to", opponentName);
-            // El servidor añadirá automáticamente el campo "from" con nuestro nombre
+            invitation.put("from", myName);  // ✅ AÑADIR ESTO
             
-            Main.wsClient.safeSend(invitation.toString());
+            String invitationStr = invitation.toString();
+            System.out.println("📤 Mensaje JSON enviado: " + invitationStr);
             
-            // Marcar invitación pendiente
+            Main.wsClient.safeSend(invitationStr);
+            
             invitationPending = true;
             pendingOpponent = opponentName;
-            
-            // Iniciar timeout (30 segundos)
             startInvitationTimeout(opponentName);
             
-            System.out.println("Invitación enviada a " + opponentName);
-            
-            // Mostrar confirmación
-            Main.showAlert("Invitación Enviada", 
-                        "Invitación enviada a " + opponentName + ". Esperando respuesta...", 
-                        AlertType.INFORMATION);
+            System.out.println("✅ Invitación enviada correctamente");
             
         } catch (Exception e) {
-            System.err.println("Error enviando invitación: " + e.getMessage());
-            lblStatus.setText("Error al enviar invitación");
-            lblStatus.setTextFill(Color.RED);
-            
-            Main.showAlert("Error", "No se pudo enviar la invitación: " + e.getMessage(), AlertType.ERROR);
+            System.err.println("❌ Error enviando invitación: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     

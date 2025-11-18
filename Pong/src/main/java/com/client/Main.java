@@ -242,13 +242,10 @@ public class Main extends Application {
                 // El servidor envía "challenge_received" pero el cliente esperaba otro nombre
                 case "challenge_received":
                     String fromPlayer = json.optString("from", "");
-                    if (!fromPlayer.isEmpty()) {
-                        Platform.runLater(() -> {
-                            System.out.println("🎯 Invitación recibida de: " + fromPlayer);
-                            // Mostrar diálogo de invitación
-                            showIncomingInvitationDialog(fromPlayer);
-                        });
-                    }
+                    System.out.println("🎯 INVITACIÓN RECIBIDA DE: " + fromPlayer);
+                    Platform.runLater(() -> {
+                        showIncomingInvitationDialog(fromPlayer);
+                    });
                     break;
                     
                 case "challenge_declined":

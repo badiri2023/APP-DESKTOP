@@ -74,58 +74,6 @@
          <padding>
             <Insets bottom="20.0" top="20.0" />
          </padding>
-         
-         <!-- Controles Jugador 1 -->
-         <VBox alignment="CENTER" spacing="10.0">
-            <Label text="CONTROLES JUGADOR 1" style="-fx-text-fill: #ffffff;">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="12.0" />
-               </font>
-            </Label>
-            <HBox alignment="CENTER" spacing="5.0">
-               <Label text="W / S" style="-fx-text-fill: #ffcc00; -fx-background-color: #333333; -fx-padding: 5 10 5 10; -fx-border-color: #666666;">
-                  <font>
-                     <Font name="8bitOperatorPlus8-Regular" size="12.0" />
-                  </font>
-               </Label>
-               <Label text="↑ / ↓" style="-fx-text-fill: #ffcc00; -fx-background-color: #333333; -fx-padding: 5 10 5 10; -fx-border-color: #666666;">
-                  <font>
-                     <Font name="8bitOperatorPlus8-Regular" size="12.0" />
-                  </font>
-               </Label>
-            </HBox>
-         </VBox>
-         
-         <!-- Controles centrales -->
-         <VBox alignment="CENTER" spacing="10.0">
-            <Label text="INICIAR JUEGO" style="-fx-text-fill: #00ff00;">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="12.0" />
-               </font>
-            </Label>
-            <Label text="ESPACIO" style="-fx-text-fill: #ffcc00; -fx-background-color: #333333; -fx-padding: 5 15 5 15; -fx-border-color: #666666;">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="14.0" />
-               </font>
-            </Label>
-         </VBox>
-         
-         <!-- Controles Jugador 2 -->
-         <VBox alignment="CENTER" spacing="10.0">
-            <Label text="CONTROLES JUGADOR 2" style="-fx-text-fill: #ffffff;">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="12.0" />
-               </font>
-            </Label>
-            <HBox alignment="CENTER" spacing="5.0">
-               <Label text="I / K" style="-fx-text-fill: #ffcc00; -fx-background-color: #333333; -fx-padding: 5 10 5 10; -fx-border-color: #666666;">
-                  <font>
-                     <Font name="8bitOperatorPlus8-Regular" size="12.0" />
-                  </font>
-               </Label>
-            </HBox>
-         </VBox>
-      </HBox>
       
       <!-- Mensaje de cuenta regresiva (overlay) -->
       <VBox fx:id="countdownOverlay" alignment="CENTER" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">

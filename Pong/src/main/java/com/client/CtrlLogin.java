@@ -15,6 +15,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -270,7 +271,7 @@ public class CtrlLogin implements Initializable {
         url = urlField.getText().trim();
 
         if (playerName.isEmpty() || url.isEmpty()) {
-            showAlert("Error", "Si us plau, completa tots els camps");
+            Main.showAlert("Error", "Si us plau, completa tots els camps", AlertType.INFORMATION);
             return;
         }
 
@@ -295,7 +296,7 @@ public class CtrlLogin implements Initializable {
             } catch (InterruptedException ex) {
                 Platform.runLater(() -> {
                     setErrorState();
-                    showAlert("Error de Connexió", "No s'ha pogut connectar al servidor");
+                    Main.showAlert("Error de Connexió", "No s'ha pogut connectar al servidor", AlertType.INFORMATION);
                 });
             }
         }).start();
@@ -334,38 +335,6 @@ public class CtrlLogin implements Initializable {
         connectButton.setDisable(false);
         connectButton.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 14));
         applyConnectButtonNormalStyle(); // Volver al estilo normal
-    }
-
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        
-        // Estilo del diálogo
-        alert.getDialogPane().setStyle(
-            "-fx-background-color: #000000; " +
-            "-fx-border-color: #ffffff; " +
-            "-fx-border-width: 3; " +
-            "-fx-border-radius: 5; " +
-            "-fx-background-radius: 5;"
-        );
-        
-        Button okButton = (Button) alert.getDialogPane().lookupButton(ButtonType.OK);
-        
-        if (okButton != null && retroFont != null) {
-            okButton.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 12));
-            okButton.setStyle(
-                "-fx-background-color: #ffffff; " +
-                "-fx-text-fill: #000000; " +
-                "-fx-background-radius: 3; " +
-                "-fx-border-radius: 3; " +
-                "-fx-border-color: #000000; " +
-                "-fx-border-width: 1;"
-            );
-        }
-        
-        alert.setContentText(message);
-        alert.showAndWait();
     }
 
     public String getUrl() {return url;}

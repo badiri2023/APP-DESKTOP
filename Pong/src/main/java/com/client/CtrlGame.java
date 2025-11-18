@@ -93,8 +93,8 @@ public class CtrlGame implements Initializable {
     // NUEVO MÉTODO: Iniciar secuencia completa del juego
     public void startGameSequence() {
         resetGame();
-        currentPhase = "choosing";
-        System.out.println("Iniciando secuencia de juego...");
+        currentPhase = "waiting"; // Cambiar a "waiting" para esperar mensajes del servidor
+        System.out.println("🎮 Secuencia de juego iniciada - Esperando mensajes del servidor...");
     }
     
     // NUEVO MÉTODO: Mostrar animación de elección de jugador inicial
@@ -221,17 +221,29 @@ public class CtrlGame implements Initializable {
         double moveDelta = 0;
         boolean moved = false;
         
-        // Controles para ambos jugadores
-        if (event.getCode() == KeyCode.W || event.getCode() == KeyCode.UP) {
-            moveDelta = -0.05;
-            moved = true;
-        } else if (event.getCode() == KeyCode.S || event.getCode() == KeyCode.DOWN) {
-            moveDelta = 0.05;
-            moved = true;
+        // ✅ CONTROL ESPECÍFICO POR ROL (opcional)
+        if ("p1".equals(playerRole)) {
+            // Jugador 1 (izquierda) - solo flechas
+            if (event.getCode() == KeyCode.UP) {
+                moveDelta = -0.05;
+                moved = true;
+            } else if (event.getCode() == KeyCode.DOWN) {
+                moveDelta = 0.05;
+                moved = true;
+            }
+        } else if ("p2".equals(playerRole)) {
+            // Jugador 2 (derecha) - también solo flechas
+            if (event.getCode() == KeyCode.UP) {
+                moveDelta = -0.05;
+                moved = true;
+            } else if (event.getCode() == KeyCode.DOWN) {
+                moveDelta = 0.05;
+                moved = true;
+            }
         }
         
         // Enviar movimiento al servidor
-        if (moved && ("p1".equals(playerRole) || "p2".equals(playerRole))) {
+        if (moved) {
             sendMoveToServer(moveDelta);
         }
         

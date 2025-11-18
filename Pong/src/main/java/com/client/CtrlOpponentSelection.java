@@ -257,9 +257,9 @@ public class CtrlOpponentSelection implements Initializable {
     private void sendInvitation(String opponentName) {
         try {
             JSONObject invitation = new JSONObject();
-            invitation.put("type", "clientInvite");
-            invitation.put("opponent", opponentName);
-            invitation.put("from", Main.ctrlLogin.getUserName());
+            invitation.put("type", "challenge"); // ✅ CORREGIDO: "challenge" en lugar de "clientInvite"
+            invitation.put("to", opponentName);
+            // El servidor añadirá automáticamente el campo "from" con nuestro nombre
             
             Main.wsClient.safeSend(invitation.toString());
             
@@ -272,15 +272,17 @@ public class CtrlOpponentSelection implements Initializable {
             
             System.out.println("Invitación enviada a " + opponentName);
             
-            // Mostrar confirmación con estilo retro
-            showRetroAlert("Invitación Enviada", "Invitación enviada a " + opponentName + ". Esperando respuesta...", AlertType.INFORMATION);
+            // Mostrar confirmación
+            Main.showAlert("Invitación Enviada", 
+                        "Invitación enviada a " + opponentName + ". Esperando respuesta...", 
+                        AlertType.INFORMATION);
             
         } catch (Exception e) {
             System.err.println("Error enviando invitación: " + e.getMessage());
             lblStatus.setText("Error al enviar invitación");
             lblStatus.setTextFill(Color.RED);
             
-            showRetroAlert("Error", "No se pudo enviar la invitación: " + e.getMessage(), AlertType.ERROR);
+            Main.showAlert("Error", "No se pudo enviar la invitación: " + e.getMessage(), AlertType.ERROR);
         }
     }
     
@@ -294,7 +296,10 @@ public class CtrlOpponentSelection implements Initializable {
                         invitationPending = false;
                         pendingOpponent = "";
                         
-                        showRetroAlert("Tiempo Agotado", "La invitación a " + opponentName + " ha expirado.", AlertType.WARNING);
+                        // ✅ USAR MÉTODO DEL MAIN: Tiempo agotado
+                        Main.showAlert("Tiempo Agotado", 
+                                    "La invitación a " + opponentName + " ha expirado.", 
+                                    AlertType.WARNING);
                         
                         // Actualizar lista
                         requestPlayersList();
@@ -309,12 +314,14 @@ public class CtrlOpponentSelection implements Initializable {
     // En el método handleIncomingInvitation, actualizar el mensaje:
 
     public void handleIncomingInvitation(String fromPlayer) {
+        // ✅ USAR MÉTODO DEL MAIN: Crear Alert de confirmación
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Invitación de Partida");
         alert.setHeaderText("¡Invitación recibida!");
         alert.setContentText("¿Aceptas jugar contra " + fromPlayer + "?\n\nLa partida comenzará inmediatamente después de aceptar.");
         
-        applyAlertStyle(alert);
+        // ✅ USAR MÉTODO DEL MAIN: Aplicar estilo
+        Main.applyAlertStyle(alert);
         
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
@@ -330,37 +337,26 @@ public class CtrlOpponentSelection implements Initializable {
     private void acceptInvitation(String fromPlayer) {
         try {
             JSONObject response = new JSONObject();
-            response.put("type", "invitationResponse");
+            response.put("type", "challenge_response"); // ✅ CORREGIDO: "challenge_response"
             response.put("to", fromPlayer);
-            response.put("from", Main.ctrlLogin.getUserName());
             response.put("accepted", true);
             
             Main.wsClient.safeSend(response.toString());
-            updateStatus("Aceptada invitación de " + fromPlayer + ". Iniciando partida...");
+            updateStatus("Aceptada invitación de " + fromPlayer);
             
-            // Cambiar a vista de loading con animación controlada
-            Main.pauseDuring(1000, () -> {
-                UtilsViews.setViewAnimating("ViewLoading");
-                CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
-                if (ctrlLoading != null) {
-                    ctrlLoading.startLoadingAnimation(() -> {
-                        // Esperar a que el servidor confirme el inicio del juego
-                        // El cambio a ViewGame lo hará el servidor con "gameStart"
-                    });
-                }
-            });
+            // ✅ ELIMINADO: No cambiar vista aquí, esperar "game_start" del servidor
+            // El servidor enviará "game_start" cuando cree la GameSession
             
         } catch (Exception e) {
             System.err.println("Error aceptando invitación: " + e.getMessage());
         }
     }
-    
+
     private void rejectInvitation(String fromPlayer) {
         try {
             JSONObject response = new JSONObject();
-            response.put("type", "invitationResponse");
+            response.put("type", "challenge_response"); // ✅ CORREGIDO: "challenge_response"
             response.put("to", fromPlayer);
-            response.put("from", Main.ctrlLogin.getUserName());
             response.put("accepted", false);
             
             Main.wsClient.safeSend(response.toString());
@@ -373,45 +369,6 @@ public class CtrlOpponentSelection implements Initializable {
     public void updateStatus(String message) {
         Platform.runLater(() -> {
             lblStatus.setText(message);
-        });
-    }
-    
-    // Método para mostrar alerts con estilo retro
-    private void showRetroAlert(String title, String message, AlertType type) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(type);
-            alert.setTitle(title);
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            applyAlertStyle(alert);
-            alert.showAndWait();
-        });
-    }
-    
-    // Aplicar estilo retro a los alerts
-    private void applyAlertStyle(Alert alert) {
-        alert.getDialogPane().setStyle(
-            "-fx-background-color: #000000; " +
-            "-fx-border-color: #ffffff; " +
-            "-fx-border-width: 3; " +
-            "-fx-border-radius: 5; " +
-            "-fx-background-radius: 5;"
-        );
-        
-        // Aplicar estilo a los botones
-        alert.getDialogPane().getButtonTypes().forEach(buttonType -> {
-            Button button = (Button) alert.getDialogPane().lookupButton(buttonType);
-            if (button != null && retroFont != null) {
-                button.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 12));
-                button.setStyle(
-                    "-fx-background-color: #ffffff; " +
-                    "-fx-text-fill: #000000; " +
-                    "-fx-background-radius: 3; " +
-                    "-fx-border-radius: 3; " +
-                    "-fx-border-color: #000000; " +
-                    "-fx-border-width: 1;"
-                );
-            }
         });
     }
     

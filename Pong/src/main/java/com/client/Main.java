@@ -188,8 +188,6 @@ public class Main extends Application {
         }
     }
     
-    // En la clase Main, modificar el método wsMessage para manejar el nuevo flujo:
-
     // En el método wsMessage, agregar manejo para las respuestas del registro:
 
     private static void wsMessage(String response) {
@@ -200,7 +198,6 @@ public class Main extends Application {
             if ("ACCEPTED".equals(response)) {
                 Platform.runLater(() -> {
                     System.out.println("✅ Registro aceptado por el servidor");
-                    // Solicitar lista de jugadores después del registro exitoso
                     requestPlayersList();
                 });
                 return;
@@ -209,16 +206,7 @@ public class Main extends Application {
             if ("REJECTED".equals(response)) {
                 Platform.runLater(() -> {
                     System.err.println("❌ Registro rechazado por el servidor");
-                    showAlert("Registro Rechazado", "El nombre de usuario ya está en uso o es inválido", AlertType.ERROR);
-                });
-                return;
-            }
-            
-            if (response.startsWith("REJECTED:")) {
-                String reason = response.substring("REJECTED:".length());
-                Platform.runLater(() -> {
-                    System.err.println("❌ Registro rechazado: " + reason);
-                    showAlert("Registro Rechazado", "Error: " + reason, AlertType.ERROR);
+                    Main.showAlert("Registro Rechazado", "El nombre de usuario ya está en uso o es inválido", AlertType.ERROR);
                 });
                 return;
             }
@@ -231,7 +219,7 @@ public class Main extends Application {
                 case "welcome":
                     String welcomeMsg = json.optString("message", "¡Bienvenido al servidor PONG!");
                     Platform.runLater(() -> {
-                        showAlert("Bienvenida", welcomeMsg, AlertType.INFORMATION);
+                        Main.showAlert("Bienvenida", welcomeMsg, AlertType.INFORMATION);
                     });
                     break;
                     
@@ -250,18 +238,7 @@ public class Main extends Application {
                     }
                     break;
                     
-                // ✅ NUEVO: Manejar mensajes de texto del servidor
-                case "text":
-                    String textMessage = json.optString("message", "");
-                    long ttlMs = json.optLong("ttl_ms", 5000);
-                    
-                    if (!textMessage.isEmpty()) {
-                        Platform.runLater(() -> {
-                            showAlert("Mensaje del Servidor", textMessage, AlertType.INFORMATION, ttlMs);
-                        });
-                    }
-                    break;
-                    
+                // ✅ INVITACIONES - FLUJO CORREGIDO
                 case "challenge_received":
                     String fromPlayer = json.optString("from", "");
                     if (!fromPlayer.isEmpty() && ctrlOpponentSelection != null) {
@@ -272,20 +249,112 @@ public class Main extends Application {
                 case "challenge_declined":
                     String decliner = json.optString("from", "");
                     Platform.runLater(() -> {
-                        showAlert("Invitación Rechazada", decliner + " rechazó tu invitación", AlertType.INFORMATION);
+                        Main.showAlert("Invitación Rechazada", decliner + " rechazó tu invitación", AlertType.INFORMATION);
+                        // Limpiar estado de invitación pendiente
+                        CtrlOpponentSelection.clearInvitation();
+                        // Actualizar lista
                         requestPlayersList();
                     });
                     break;
 
-                // ... resto de casos para mensajes de juego ...
+                // ✅ JUEGO - FLUJO PRINCIPAL
+                case "game_start":
+                    String opponent = json.optString("opponent", "");
+                    String role = json.optString("role", "");
+                    Platform.runLater(() -> {
+                        System.out.println("🎮 Iniciando partida - Rol: " + role + ", Oponente: " + opponent);
+                        // Limpiar estado de invitación pendiente
+                        CtrlOpponentSelection.clearInvitation();
+                        // Cambiar directamente a ViewGame
+                        UtilsViews.setViewAnimating("ViewGame");
+                        CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
+                        if (ctrlGame != null) {
+                            ctrlGame.setPlayerRole(role, opponent);
+                            ctrlGame.startGameSequence();
+                        }
+                    });
+                    break;
+                    
+                case "choosing_starter":
+                    Platform.runLater(() -> {
+                        CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
+                        if (ctrlGame != null && "ViewGame".equals(UtilsViews.getActiveView())) {
+                            ctrlGame.showChoosingStarter();
+                        }
+                    });
+                    break;
+                    
+                case "text":
+                    String textMessage = json.optString("message", "");
+                    long ttlMs = json.optLong("ttl_ms", 5000);
+                    
+                    if (textMessage.contains("Starts Player")) {
+                        Platform.runLater(() -> {
+                            CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
+                            if (ctrlGame != null && "ViewGame".equals(UtilsViews.getActiveView())) {
+                                ctrlGame.showStarterAnnouncement(textMessage, ttlMs);
+                            }
+                        });
+                    } else {
+                        // Otros mensajes de texto
+                        if (!textMessage.isEmpty()) {
+                            Platform.runLater(() -> {
+                                Main.showAlert("Mensaje del Servidor", textMessage, AlertType.INFORMATION, ttlMs);
+                            });
+                        }
+                    }
+                    break;
+                    
+                case "countdown":
+                    String countdownValue = json.optString("value", "3");
+                    Platform.runLater(() -> {
+                        CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
+                        if (ctrlGame != null && "ViewGame".equals(UtilsViews.getActiveView())) {
+                            ctrlGame.handleCountdown(countdownValue);
+                        }
+                    });
+                    break;
+                    
+                case "game_state":
+                    // Actualizar estado del juego en tiempo real
+                    double p1Y = json.optDouble("p1_y", 0.5);
+                    double p2Y = json.optDouble("p2_y", 0.5);
+                    double ballX = json.optDouble("ball_x", 0.5);
+                    double ballY = json.optDouble("ball_y", 0.5);
+                    int score1 = json.optInt("score1", 0);
+                    int score2 = json.optInt("score2", 0);
+                    
+                    Platform.runLater(() -> {
+                        CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
+                        if (ctrlGame != null && "ViewGame".equals(UtilsViews.getActiveView())) {
+                            ctrlGame.updateGameState(p1Y, p2Y, ballX, ballY, score1, score2);
+                        }
+                    });
+                    break;
+                    
+                case "game_over":
+                    String winner = json.optString("winner", "");
+                    String reason = json.optString("reason", "");
+                    int finalScore1 = json.optInt("score1", 0);
+                    int finalScore2 = json.optInt("score2", 0);
+                    
+                    Platform.runLater(() -> {
+                        CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
+                        if (ctrlGame != null) {
+                            if (!reason.isEmpty()) {
+                                Main.showAlert("Partida Terminada", reason, AlertType.INFORMATION);
+                            }
+                            ctrlGame.handleGameOver(winner, finalScore1, finalScore2);
+                        }
+                    });
+                    break;
                     
                 default:
                     System.out.println("Mensaje no manejado - Tipo: " + type);
             }
             
         } catch (Exception e) {
-            // Si falla el parseo JSON, es probable que sea un mensaje de texto del servidor
-            System.out.println("Mensaje de texto del servidor: " + response);
+            System.err.println("Error procesando mensaje: " + e.getMessage());
         }
     }
 
@@ -304,13 +373,19 @@ public class Main extends Application {
         }
     }
 
-    // En Main.java, mejorar el método showAlert:
+    // En Main.java, cambiar la visibilidad de los métodos:
 
-    private static void showAlert(String title, String message, AlertType type) {
+    /**
+     * Muestra un Alert con estilo retro (versión bloqueante)
+     */
+    public static void showAlert(String title, String message, AlertType type) {
         showAlert(title, message, type, 0); // Por defecto sin auto-cierre
     }
 
-    private static void showAlert(String title, String message, AlertType type, long autoCloseMs) {
+    /**
+     * Muestra un Alert con estilo retro y auto-cierre opcional
+     */
+    public static void showAlert(String title, String message, AlertType type, long autoCloseMs) {
         Platform.runLater(() -> {
             Alert alert = new Alert(type);
             alert.setTitle(title);
@@ -338,7 +413,7 @@ public class Main extends Application {
     /**
      * Aplica estilo retro a un Alert con texto BLANCO
      */
-    private static void applyAlertStyle(Alert alert) {
+    public static void applyAlertStyle(Alert alert) {
         // Estilo del panel principal del Alert
         alert.getDialogPane().setStyle(
             "-fx-background-color: #000000; " +
@@ -348,13 +423,13 @@ public class Main extends Application {
             "-fx-background-radius: 5;"
         );
         
-        // ✅ NUEVO: Estilo del contenido (texto) a BLANCO
+        // Estilo del contenido (texto) a BLANCO
         Label contentLabel = (Label) alert.getDialogPane().lookup(".content.label");
         if (contentLabel != null) {
             contentLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 14px;");
         }
         
-        // ✅ NUEVO: Estilo del header (si existe)
+        // Estilo del header (si existe)
         Node header = alert.getDialogPane().lookup(".header-panel");
         if (header != null) {
             header.setStyle("-fx-background-color: #000000;");
@@ -371,7 +446,7 @@ public class Main extends Application {
                 button.setFont(Font.font(ctrlLogin.retroFont.getFamily(), FontWeight.BOLD, 12));
                 button.setStyle(
                     "-fx-background-color: #ffffff; " +
-                    "-fx-text-fill: #000000; " +  // Texto negro en botones blancos
+                    "-fx-text-fill: #000000; " +
                     "-fx-background-radius: 3; " +
                     "-fx-border-radius: 3; " +
                     "-fx-border-color: #000000; " +

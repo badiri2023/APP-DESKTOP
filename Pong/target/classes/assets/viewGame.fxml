@@ -69,12 +69,6 @@
       <!-- Canvas del juego -->
       <Canvas fx:id="gameCanvas" height="500.0" width="800.0" AnchorPane.bottomAnchor="100.0" AnchorPane.leftAnchor="200.0" AnchorPane.rightAnchor="200.0" AnchorPane.topAnchor="80.0" />
       
-      <!-- Panel inferior con controles -->
-      <HBox alignment="CENTER" spacing="150.0" style="-fx-background-color: #111111; -fx-border-color: #333333; -fx-border-width: 2 0 0 0;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
-         <padding>
-            <Insets bottom="20.0" top="20.0" />
-         </padding>
-      
       <!-- Mensaje de cuenta regresiva (overlay) -->
       <VBox fx:id="countdownOverlay" alignment="CENTER" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <Label fx:id="countdownLabel" text="3" style="-fx-text-fill: #ffffff; -fx-font-size: 72px;">

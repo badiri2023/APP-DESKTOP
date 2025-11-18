@@ -183,8 +183,8 @@ public class CtrlOpponentSelection implements Initializable {
 
     public void updatePlayersList(JSONArray playersArray) {
         Platform.runLater(() -> {
-            System.out.println("🔄 ACTUALIZANDO LISTA DE JUGADORES");
-            System.out.println("📊 Datos recibidos: " + playersArray.toString());
+            System.out.println("ACTUALIZANDO LISTA DE JUGADORES");
+            System.out.println("Datos recibidos: " + playersArray.toString());
             
             listPlayers.getItems().clear();
             
@@ -216,7 +216,7 @@ public class CtrlOpponentSelection implements Initializable {
                 }
             }
             
-            System.out.println("🎯 Total jugadores disponibles: " + availablePlayers);
+            System.out.println("Total jugadores disponibles: " + availablePlayers);
         });
     }
 
@@ -236,7 +236,7 @@ public class CtrlOpponentSelection implements Initializable {
     private void sendInvitation(String opponentName) {
         try {
             String myName = Main.ctrlLogin.getUserName();
-            System.out.println("🎯 ENVIANDO INVITACIÓN: De " + myName + " para " + opponentName);
+            System.out.println("ENVIANDO INVITACIÓN: De " + myName + " para " + opponentName);
             
             JSONObject invitation = new JSONObject();
             invitation.put("type", "challenge");
@@ -288,7 +288,7 @@ public class CtrlOpponentSelection implements Initializable {
     private void rejectInvitation(String fromPlayer) {
         try {
             JSONObject response = new JSONObject();
-            response.put("type", "challenge_response"); // ✅ CORREGIDO: "challenge_response"
+            response.put("type", "challenge_response"); 
             response.put("to", fromPlayer);
             response.put("accepted", false);
             

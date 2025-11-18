@@ -242,7 +242,7 @@ public class Main extends Application {
                 // El servidor envía "challenge_received" pero el cliente esperaba otro nombre
                 case "challenge_received":
                     String fromPlayer = json.optString("from", "");
-                    System.out.println("🎯 INVITACIÓN RECIBIDA DE: " + fromPlayer);
+                    System.out.println("INVITACIÓN RECIBIDA DE: " + fromPlayer);
                     Platform.runLater(() -> {
                         showIncomingInvitationDialog(fromPlayer);
                     });
@@ -264,7 +264,7 @@ public class Main extends Application {
                     String opponent = json.optString("opponent", "");
                     String role = json.optString("role", "");
                     Platform.runLater(() -> {
-                        System.out.println("🎮 Iniciando partida - Rol: " + role + ", Oponente: " + opponent);
+                        System.out.println("Iniciando partida - Rol: " + role + ", Oponente: " + opponent);
                         // Limpiar estado de invitación pendiente
                         CtrlOpponentSelection.clearInvitation();
                         // Cambiar directamente a ViewGame

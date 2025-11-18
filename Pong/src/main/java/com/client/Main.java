@@ -13,6 +13,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.text.Font;
@@ -238,11 +239,15 @@ public class Main extends Application {
                     }
                     break;
                     
-                // ✅ INVITACIONES - FLUJO CORREGIDO
+                // ✅ CORREGIDO: El servidor envía "challenge_received" pero el cliente esperaba otro nombre
                 case "challenge_received":
                     String fromPlayer = json.optString("from", "");
-                    if (!fromPlayer.isEmpty() && ctrlOpponentSelection != null) {
-                        ctrlOpponentSelection.handleIncomingInvitation(fromPlayer);
+                    if (!fromPlayer.isEmpty()) {
+                        Platform.runLater(() -> {
+                            System.out.println("🎯 Invitación recibida de: " + fromPlayer);
+                            // Mostrar diálogo de invitación
+                            showIncomingInvitationDialog(fromPlayer);
+                        });
                     }
                     break;
                     
@@ -355,6 +360,66 @@ public class Main extends Application {
             
         } catch (Exception e) {
             System.err.println("Error procesando mensaje: " + e.getMessage());
+        }
+    }
+
+    // ✅ NUEVO MÉTODO: Mostrar diálogo de invitación entrante
+    private static void showIncomingInvitationDialog(String fromPlayer) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Invitación de Partida");
+        alert.setHeaderText("¡Invitación recibida!");
+        alert.setContentText("¿Aceptas jugar contra " + fromPlayer + "?\n\nLa partida comenzará inmediatamente después de aceptar.");
+        
+        applyAlertStyle(alert);
+        
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                // Aceptar invitación
+                acceptIncomingInvitation(fromPlayer);
+            } else {
+                // Rechazar invitación
+                rejectIncomingInvitation(fromPlayer);
+            }
+        });
+    }
+
+    // ✅ NUEVO MÉTODO: Aceptar invitación entrante
+    private static void acceptIncomingInvitation(String fromPlayer) {
+        try {
+            JSONObject response = new JSONObject();
+            response.put("type", "challenge_response");
+            response.put("to", fromPlayer);
+            response.put("accepted", true);
+            
+            if (wsClient != null && wsClient.isOpen()) {
+                wsClient.safeSend(response.toString());
+                System.out.println("✅ Invitación aceptada - Enviando respuesta al servidor");
+                
+                // Mostrar mensaje de espera
+                Main.showAlert("Invitación Aceptada", 
+                            "Has aceptado jugar contra " + fromPlayer + ". Iniciando partida...", 
+                            AlertType.INFORMATION);
+            }
+        } catch (Exception e) {
+            System.err.println("Error aceptando invitación: " + e.getMessage());
+            Main.showAlert("Error", "No se pudo aceptar la invitación: " + e.getMessage(), AlertType.ERROR);
+        }
+    }
+
+    // ✅ NUEVO MÉTODO: Rechazar invitación entrante
+    private static void rejectIncomingInvitation(String fromPlayer) {
+        try {
+            JSONObject response = new JSONObject();
+            response.put("type", "challenge_response");
+            response.put("to", fromPlayer);
+            response.put("accepted", false);
+            
+            if (wsClient != null && wsClient.isOpen()) {
+                wsClient.safeSend(response.toString());
+                System.out.println("❌ Invitación rechazada - Enviando respuesta al servidor");
+            }
+        } catch (Exception e) {
+            System.err.println("Error rechazando invitación: " + e.getMessage());
         }
     }
 

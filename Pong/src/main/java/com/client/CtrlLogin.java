@@ -262,6 +262,8 @@ public class CtrlLogin implements Initializable {
         }
     }
 
+    // En el método handleConnect(), mejorar el flujo:
+
     @FXML
     private void handleConnect() {
         playerName = playerNameField.getText().trim();
@@ -286,9 +288,8 @@ public class CtrlLogin implements Initializable {
                 
                 Platform.runLater(() -> {
                     setConnectedState();
-                    // Solo conectar al servidor, NO cambiar vista aquí
+                    // Conectar al servidor - ahora enviará NICKNAME: correctamente
                     Main.connectToServer();
-                    // El cambio de vista lo hará el servidor cuando confirme la conexión
                 });
                 
             } catch (InterruptedException ex) {

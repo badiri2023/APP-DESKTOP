@@ -3,7 +3,10 @@ package com.client;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import org.json.JSONObject;
+
 import javafx.animation.AnimationTimer;
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
@@ -16,6 +19,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.TextAlignment;
+import javafx.util.Duration;
 
 public class CtrlGame implements Initializable {
 
@@ -33,12 +38,16 @@ public class CtrlGame implements Initializable {
     
     // Variables del juego
     private double player1Y, player2Y;
-    private double ballX, ballY, ballSpeedX, ballSpeedY;
+    private double ballX, ballY;
     private int player1Score = 0, player2Score = 0;
-    private boolean gameStarted = false;
-    private boolean countdownActive = true;
-    private int countdownValue = 3;
-    private long lastCountdownUpdate = 0;
+    private boolean gameActive = false;
+    private boolean countdownActive = false;
+    private String countdownValue = "";
+    
+    // Nuevas variables para el flujo mejorado
+    private String playerRole = "";
+    private String opponentName = "";
+    private String currentPhase = "waiting"; // waiting, choosing, announcing, countdown, playing
     
     // Dimensiones del juego
     private final double PADDLE_WIDTH = 15;
@@ -72,13 +81,98 @@ public class CtrlGame implements Initializable {
             // Configurar controles
             setupControls();
             
-            // Iniciar game loop
+            // Iniciar game loop (solo renderizado)
             startGameLoop();
             
         } catch (Exception e) {
             System.err.println("Error en CtrlGame: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+    
+    // NUEVO MÉTODO: Iniciar secuencia completa del juego
+    public void startGameSequence() {
+        resetGame();
+        currentPhase = "choosing";
+        System.out.println("Iniciando secuencia de juego...");
+    }
+    
+    // NUEVO MÉTODO: Mostrar animación de elección de jugador inicial
+    public void showChoosingStarter() {
+        currentPhase = "choosing";
+        System.out.println("Servidor eligiendo jugador inicial...");
+    }
+    
+    // NUEVO MÉTODO: Mostrar anuncio de quién inicia
+    public void showStarterAnnouncement(String message, long duration) {
+        currentPhase = "announcing";
+        countdownValue = message;
+        countdownActive = true;
+        
+        // Configurar timer para ocultar el anuncio
+        PauseTransition pause = new PauseTransition(Duration.millis(duration));
+        pause.setOnFinished(e -> {
+            countdownActive = false;
+            // La cuenta regresiva comenzará automáticamente desde el servidor
+        });
+        pause.play();
+    }
+    
+    public void setPlayerRole(String role, String opponent) {
+        this.playerRole = role;
+        this.opponentName = opponent;
+        System.out.println("Rol asignado: " + role + ", Oponente: " + opponent);
+        
+        // Actualizar interfaz según el rol
+        if (scoreLabel != null) {
+            if ("p1".equals(role)) {
+                scoreLabel.setText(Main.ctrlLogin.getUserName() + " vs " + opponent);
+            } else {
+                scoreLabel.setText(opponent + " vs " + Main.ctrlLogin.getUserName());
+            }
+        }
+    }
+    
+    public void updateGameState(double p1Y, double p2Y, double ballX, double ballY, int score1, int score2) {
+        // Solo actualizar estado si estamos en fase de juego activo
+        if ("playing".equals(currentPhase)) {
+            this.player1Y = p1Y * (FIELD_HEIGHT - PADDLE_HEIGHT);
+            this.player2Y = p2Y * (FIELD_HEIGHT - PADDLE_HEIGHT);
+            this.ballX = ballX * (FIELD_WIDTH - BALL_SIZE);
+            this.ballY = ballY * (FIELD_HEIGHT - BALL_SIZE);
+            this.player1Score = score1;
+            this.player2Score = score2;
+            
+            updateScoreDisplay();
+        }
+    }
+    
+    public void handleCountdown(String value) {
+        if ("GO!".equals(value)) {
+            countdownActive = false;
+            gameActive = true;
+            currentPhase = "playing";
+            countdownValue = "";
+            System.out.println("¡JUEGO INICIADO!");
+        } else {
+            countdownActive = true;
+            countdownValue = value;
+            currentPhase = "countdown";
+        }
+    }
+    
+    public void handleGameOver(String winner, int finalScore1, int finalScore2) {
+        gameActive = false;
+        currentPhase = "finished";
+        stopGame();
+        
+        Main.pauseDuring(2000, () -> {
+            UtilsViews.setViewAnimating("ViewGameOver");
+            CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
+            if (ctrlGameOver != null) {
+                ctrlGameOver.setWinner(winner, finalScore1, finalScore2);
+            }
+        });
     }
     
     private void applyStyles() {
@@ -95,28 +189,19 @@ public class CtrlGame implements Initializable {
     }
     
     private void resetGame() {
-        // Posiciones iniciales
         player1Y = FIELD_HEIGHT / 2 - PADDLE_HEIGHT / 2;
         player2Y = FIELD_HEIGHT / 2 - PADDLE_HEIGHT / 2;
         ballX = FIELD_WIDTH / 2 - BALL_SIZE / 2;
         ballY = FIELD_HEIGHT / 2 - BALL_SIZE / 2;
         
-        // Reset scores
         player1Score = 0;
         player2Score = 0;
-        gameStarted = false;
-        countdownActive = true;
-        countdownValue = 3;
-        lastCountdownUpdate = System.nanoTime();
+        gameActive = false;
+        countdownActive = false;
+        countdownValue = "";
+        currentPhase = "waiting";
         
         updateScoreDisplay();
-    }
-    
-    private void startGame() {
-        // Dirección inicial aleatoria
-        ballSpeedX = (Math.random() > 0.5 ? 1 : -1) * 5;
-        ballSpeedY = (Math.random() * 2 - 1) * 3;
-        gameStarted = true;
     }
     
     private void setupControls() {
@@ -128,139 +213,94 @@ public class CtrlGame implements Initializable {
     }
     
     private void handleKeyPress(KeyEvent event) {
-        // Controles para jugador 1 (W/S o Flechas arriba/abajo)
+        // Solo procesar movimientos si el juego está activo
+        if (!gameActive || !"playing".equals(currentPhase)) {
+            return;
+        }
+        
+        double moveDelta = 0;
+        boolean moved = false;
+        
+        // Controles para ambos jugadores
         if (event.getCode() == KeyCode.W || event.getCode() == KeyCode.UP) {
-            movePlayer1(-8);
+            moveDelta = -0.05;
+            moved = true;
         } else if (event.getCode() == KeyCode.S || event.getCode() == KeyCode.DOWN) {
-            movePlayer1(8);
+            moveDelta = 0.05;
+            moved = true;
         }
         
-        // Controles para jugador 2 (I/K)
-        if (event.getCode() == KeyCode.I) {
-            movePlayer2(-8);
-        } else if (event.getCode() == KeyCode.K) {
-            movePlayer2(8);
+        // Enviar movimiento al servidor
+        if (moved && ("p1".equals(playerRole) || "p2".equals(playerRole))) {
+            sendMoveToServer(moveDelta);
         }
         
-        // Espacio para iniciar juego
-        if (event.getCode() == KeyCode.SPACE && !gameStarted && !countdownActive) {
-            startGame();
+        event.consume();
+    }
+    
+    private void sendMoveToServer(double delta) {
+        try {
+            // Calcular nueva posición (0-1)
+            double currentY = "p1".equals(playerRole) ? 
+                player1Y / (FIELD_HEIGHT - PADDLE_HEIGHT) : 
+                player2Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
+            double newY = Math.max(0, Math.min(1, currentY + delta));
+            
+            JSONObject moveMsg = new JSONObject();
+            moveMsg.put("type", "move");
+            moveMsg.put("y_pos", newY);
+            
+            if (Main.wsClient != null && Main.wsClient.isOpen()) {
+                Main.wsClient.safeSend(moveMsg.toString());
+            }
+        } catch (Exception e) {
+            System.err.println("Error enviando movimiento al servidor: " + e.getMessage());
         }
     }
     
     private void handleKeyRelease(KeyEvent event) {
-        // Puedes implementar movimiento suave aquí si es necesario
-    }
-    
-    private void movePlayer1(double delta) {
-        player1Y += delta;
-        // Limitar dentro del campo
-        player1Y = Math.max(0, Math.min(FIELD_HEIGHT - PADDLE_HEIGHT, player1Y));
-    }
-    
-    private void movePlayer2(double delta) {
-        player2Y += delta;
-        // Limitar dentro del campo
-        player2Y = Math.max(0, Math.min(FIELD_HEIGHT - PADDLE_HEIGHT, player2Y));
+        // Para movimiento suave si se implementa
     }
     
     private void startGameLoop() {
         gameLoop = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                updateGame();
                 renderGame();
             }
         };
         gameLoop.start();
     }
     
-    private void updateGame() {
-        if (countdownActive) {
-            handleCountdown();
-            return;
-        }
-        
-        if (!gameStarted) {
-            return;
-        }
-        
-        // Mover pelota
-        ballX += ballSpeedX;
-        ballY += ballSpeedY;
-        
-        // Rebotes en paredes superior e inferior
-        if (ballY <= 0 || ballY >= FIELD_HEIGHT - BALL_SIZE) {
-            ballSpeedY = -ballSpeedY;
-        }
-        
-        // Colisión con pala izquierda
-        if (ballX <= PADDLE_WIDTH && 
-            ballY + BALL_SIZE >= player1Y && 
-            ballY <= player1Y + PADDLE_HEIGHT) {
-            ballSpeedX = Math.abs(ballSpeedX) * 1.1; // Aumentar velocidad
-            ballSpeedY += (Math.random() * 2 - 1) * 2; // Variación aleatoria
-        }
-        
-        // Colisión con pala derecha
-        if (ballX >= FIELD_WIDTH - PADDLE_WIDTH - BALL_SIZE && 
-            ballY + BALL_SIZE >= player2Y && 
-            ballY <= player2Y + PADDLE_HEIGHT) {
-            ballSpeedX = -Math.abs(ballSpeedX) * 1.1; // Aumentar velocidad
-            ballSpeedY += (Math.random() * 2 - 1) * 2; // Variación aleatoria
-        }
-        
-        // Puntuación
-        if (ballX < 0) {
-            player2Score++;
-            resetBall();
-            updateScoreDisplay();
-            checkGameOver();
-        } else if (ballX > FIELD_WIDTH) {
-            player1Score++;
-            resetBall();
-            updateScoreDisplay();
-            checkGameOver();
-        }
-    }
-    
-    private void handleCountdown() {
-        long currentTime = System.nanoTime();
-        if (currentTime - lastCountdownUpdate >= 1_000_000_000) { // 1 segundo
-            countdownValue--;
-            lastCountdownUpdate = currentTime;
-            
-            if (countdownValue <= 0) {
-                countdownActive = false;
-            }
-        }
-    }
-    
-    private void resetBall() {
-        ballX = FIELD_WIDTH / 2 - BALL_SIZE / 2;
-        ballY = FIELD_HEIGHT / 2 - BALL_SIZE / 2;
-        gameStarted = false;
-    }
-    
-    private void checkGameOver() {
-        if (player1Score >= 5 || player2Score >= 5) {
-            gameStarted = false;
-            // Pasar a vista de Game Over
-            Main.pauseDuring(2000, () -> {
-                String winner = player1Score >= 5 ? "Jugador 1" : "Jugador 2";
-                UtilsViews.setViewAnimating("ViewGameOver");
-                CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
-                if (ctrlGameOver != null) {
-                    ctrlGameOver.setWinner(winner, player1Score, player2Score);
-                }
-            });
-        }
-    }
-    
     private void renderGame() {
         gc.clearRect(0, 0, FIELD_WIDTH, FIELD_HEIGHT);
         
-        // Dibujar campo
+        // Dibujar campo (siempre visible)
+        drawField();
+        
+        // Dibujar elementos según la fase actual
+        switch (currentPhase) {
+            case "choosing":
+                drawChoosingPhase();
+                break;
+            case "announcing":
+                drawAnnouncingPhase();
+                break;
+            case "countdown":
+                drawCountdownPhase();
+                break;
+            case "playing":
+                drawPlayingPhase();
+                break;
+            case "waiting":
+            default:
+                drawWaitingPhase();
+                break;
+        }
+    }
+    
+    private void drawField() {
+        // Campo de juego
         gc.setStroke(Color.WHITE);
         gc.setLineWidth(2);
         gc.strokeRect(0, 0, FIELD_WIDTH, FIELD_HEIGHT);
@@ -270,30 +310,59 @@ public class CtrlGame implements Initializable {
         gc.setLineDashes(10);
         gc.strokeLine(FIELD_WIDTH / 2, 0, FIELD_WIDTH / 2, FIELD_HEIGHT);
         gc.setLineDashes(null);
-        
+    }
+    
+    private void drawChoosingPhase() {
+        gc.setFill(Color.YELLOW);
+        gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 32));
+        gc.setTextAlign(TextAlignment.CENTER);
+        gc.fillText("ELEGIENDO JUGADOR INICIAL...", FIELD_WIDTH / 2, FIELD_HEIGHT / 2);
+        gc.setTextAlign(TextAlignment.LEFT);
+    }
+    
+    private void drawAnnouncingPhase() {
+        if (countdownActive) {
+            gc.setFill(Color.CYAN);
+            gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 28));
+            gc.setTextAlign(TextAlignment.CENTER);
+            gc.fillText(countdownValue, FIELD_WIDTH / 2, FIELD_HEIGHT / 2);
+            gc.setTextAlign(TextAlignment.LEFT);
+        }
+    }
+    
+    private void drawCountdownPhase() {
+        if (countdownActive) {
+            gc.setFill(Color.WHITE);
+            gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 48));
+            gc.setTextAlign(TextAlignment.CENTER);
+            gc.fillText(countdownValue, FIELD_WIDTH / 2, FIELD_HEIGHT / 2);
+            gc.setTextAlign(TextAlignment.LEFT);
+        }
+    }
+    
+    private void drawPlayingPhase() {
         // Dibujar palas
         gc.setFill(Color.WHITE);
         gc.fillRect(0, player1Y, PADDLE_WIDTH, PADDLE_HEIGHT);
         gc.fillRect(FIELD_WIDTH - PADDLE_WIDTH, player2Y, PADDLE_WIDTH, PADDLE_HEIGHT);
         
-        if (countdownActive) {
-            // Mostrar cuenta regresiva
-            gc.setFill(Color.WHITE);
-            gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 48));
-            gc.fillText(String.valueOf(countdownValue), FIELD_WIDTH / 2 - 10, FIELD_HEIGHT / 2);
-        } else if (!gameStarted) {
-            // Mostrar pelota centrada
-            gc.setFill(Color.WHITE);
-            gc.fillOval(ballX, ballY, BALL_SIZE, BALL_SIZE);
-            
-            // Mensaje de inicio
-            gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 24));
-            gc.fillText("PRESIONA ESPACIO", FIELD_WIDTH / 2 - 120, FIELD_HEIGHT / 2 + 50);
-        } else {
-            // Dibujar pelota en movimiento
-            gc.setFill(Color.WHITE);
-            gc.fillOval(ballX, ballY, BALL_SIZE, BALL_SIZE);
+        // Dibujar pelota
+        gc.fillOval(ballX, ballY, BALL_SIZE, BALL_SIZE);
+        
+        // Información del rol
+        if (!playerRole.isEmpty()) {
+            gc.setFont(Font.font(retroFont.getFamily(), 12));
+            gc.setFill(Color.GRAY);
+            gc.fillText("Tú: " + ("p1".equals(playerRole) ? "Jugador 1 (Izq)" : "Jugador 2 (Der)"), 10, 20);
         }
+    }
+    
+    private void drawWaitingPhase() {
+        gc.setFill(Color.WHITE);
+        gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 24));
+        gc.setTextAlign(TextAlignment.CENTER);
+        gc.fillText("ESPERANDO INICIO DE PARTIDA", FIELD_WIDTH / 2, FIELD_HEIGHT / 2);
+        gc.setTextAlign(TextAlignment.LEFT);
     }
     
     private void updateScoreDisplay() {

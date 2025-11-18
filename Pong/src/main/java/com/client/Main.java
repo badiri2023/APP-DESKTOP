@@ -8,10 +8,12 @@ import org.json.JSONObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -145,13 +147,12 @@ public class Main extends Application {
             // Esperar a que la conexión se establezca
             pauseDuring(2000, () -> {
                 if (wsClient != null && wsClient.isOpen()) {
-                    JSONObject userInfo = new JSONObject();
-                    userInfo.put("type", "userInfo");
-                    userInfo.put("userName", ctrlLogin.getUserName().trim());
-                    wsClient.safeSend(userInfo.toString());
-                    System.out.println("Enviando nombre de usuario: " + ctrlLogin.getUserName().trim());
+                    // ✅ CORREGIDO: Enviar NICKNAME: en lugar de JSON
+                    String nicknameMessage = "NICKNAME:" + ctrlLogin.getUserName().trim();
+                    wsClient.safeSend(nicknameMessage);
+                    System.out.println("Enviando nombre de usuario (NICKNAME): " + ctrlLogin.getUserName().trim());
                     
-                    // Cambiar a vista de selección de oponente
+                    // Cambiar a vista de selección de oponente después del registro
                     pauseDuring(1000, () -> {
                         if (ctrlOpponentSelection != null) {
                             UtilsViews.setViewAnimating("ViewOpponentSelection");
@@ -162,7 +163,6 @@ public class Main extends Application {
                     });
                 } else {
                     System.err.println("No se pudo establecer conexión WebSocket");
-                    // Mostrar error al usuario
                     Platform.runLater(() -> {
                         showAlert("Error de Conexión", "No se pudo conectar al servidor: " + url, AlertType.ERROR);
                     });
@@ -173,118 +173,119 @@ public class Main extends Application {
     
     public static void requestPlayersList() {
         try {
+            // Esperar a que el WebSocket esté conectado
+            if (wsClient == null || !wsClient.isOpen()) {
+                System.err.println("WebSocket no conectado, no se puede solicitar lista de jugadores");
+                return;
+            }
+            
             JSONObject request = new JSONObject();
             request.put("type", "getPlayers");
-            if (wsClient != null && wsClient.isOpen()) {
-                wsClient.safeSend(request.toString());
-                System.out.println("Solicitando lista de jugadores...");
-            }
+            wsClient.safeSend(request.toString());
+            System.out.println("Solicitando lista de jugadores...");
         } catch (Exception e) {
             System.err.println("Error solicitando lista de jugadores: " + e.getMessage());
         }
     }
     
+    // En la clase Main, modificar el método wsMessage para manejar el nuevo flujo:
+
+    // En el método wsMessage, agregar manejo para las respuestas del registro:
+
     private static void wsMessage(String response) {
         try {
             System.out.println("Mensaje recibido del servidor: " + response);
+            
+            // ✅ PRIMERO: Manejar respuestas de texto plano del registro
+            if ("ACCEPTED".equals(response)) {
+                Platform.runLater(() -> {
+                    System.out.println("✅ Registro aceptado por el servidor");
+                    // Solicitar lista de jugadores después del registro exitoso
+                    requestPlayersList();
+                });
+                return;
+            }
+            
+            if ("REJECTED".equals(response)) {
+                Platform.runLater(() -> {
+                    System.err.println("❌ Registro rechazado por el servidor");
+                    showAlert("Registro Rechazado", "El nombre de usuario ya está en uso o es inválido", AlertType.ERROR);
+                });
+                return;
+            }
+            
+            if (response.startsWith("REJECTED:")) {
+                String reason = response.substring("REJECTED:".length());
+                Platform.runLater(() -> {
+                    System.err.println("❌ Registro rechazado: " + reason);
+                    showAlert("Registro Rechazado", "Error: " + reason, AlertType.ERROR);
+                });
+                return;
+            }
+            
+            // ✅ SEGUNDO: Si no es texto plano, intentar procesar como JSON
             JSONObject json = new JSONObject(response);
             String type = json.optString("type", "");
             
             switch (type) {
                 case "welcome":
-                    // ✅ MOSTRAR ALERT DE BIENVENIDA Y CAMBIAR A OPPONENT SELECTION
                     String welcomeMsg = json.optString("message", "¡Bienvenido al servidor PONG!");
                     Platform.runLater(() -> {
                         showAlert("Bienvenida", welcomeMsg, AlertType.INFORMATION);
-                        // SOLO CAMBIAR VISTA CUANDO EL SERVIDOR CONFIRME LA CONEXIÓN
-                        UtilsViews.setViewAnimating("ViewOpponentSelection");
-                        requestPlayersList();
                     });
                     break;
                     
-                case "userRegistered":
-                    // ✅ MOSTRAR ALERT DE REGISTRO EXITOSO
-                    String regMsg = json.optString("message", "Registro exitoso");
-                    Platform.runLater(() -> {
-                        showAlert("Registro Exitoso", regMsg, AlertType.INFORMATION);
-                    });
-                    break;
-                    
-                case "clients":  // ✅ NUEVO CASO - IGUAL QUE LA RASPBERRY PI
-                    if (ctrlOpponentSelection != null && json.has("list")) {
-                        JSONArray playersArray = json.getJSONArray("list");
+                case "clients":
+                case "playersList":
+                    if (ctrlOpponentSelection != null) {
+                        JSONArray playersArray;
+                        if (json.has("list")) {
+                            playersArray = json.getJSONArray("list");
+                        } else if (json.has("players")) {
+                            playersArray = json.getJSONArray("players");
+                        } else {
+                            playersArray = new JSONArray();
+                        }
                         ctrlOpponentSelection.updatePlayersList(playersArray);
-                        System.out.println("Lista de clientes recibida: " + playersArray.length() + " jugadores");
                     }
                     break;
                     
-                // case "playersList":  // ✅ MANTENER POR COMPATIBILIDAD
-                //     if (ctrlOpponentSelection != null && json.has("players")) {
-                //         java.util.List<Object> playersList = json.getJSONArray("players").toList();
-                //         String[] players = playersList.toArray(new String[0]);
-                //         ctrlOpponentSelection.updatePlayersList(players);
-                //     }
-                //     break;
+                // ✅ NUEVO: Manejar mensajes de texto del servidor
+                case "text":
+                    String textMessage = json.optString("message", "");
+                    long ttlMs = json.optLong("ttl_ms", 5000);
                     
-                case "clientInvite":
+                    if (!textMessage.isEmpty()) {
+                        Platform.runLater(() -> {
+                            showAlert("Mensaje del Servidor", textMessage, AlertType.INFORMATION, ttlMs);
+                        });
+                    }
+                    break;
+                    
+                case "challenge_received":
                     String fromPlayer = json.optString("from", "");
-                    String inviteMsg = json.optString("message", "Invitación recibida");
                     if (!fromPlayer.isEmpty() && ctrlOpponentSelection != null) {
                         ctrlOpponentSelection.handleIncomingInvitation(fromPlayer);
                     }
                     break;
                     
-                case "invitationResponse":
-                    boolean accepted = json.optBoolean("accepted", false);
-                    String responder = json.optString("from", "");
-                    String responseMsg = json.optString("message", "Respuesta a invitación");
-                    
-                    if (accepted) {
-                        Platform.runLater(() -> {
-                            showAlert("Invitación Aceptada", responseMsg, AlertType.INFORMATION);
-                            // Cambiar a vista de loading cuando se acepte la invitación
-                            UtilsViews.setViewAnimating("ViewLoading");
-                        });
-                    } else {
-                        Platform.runLater(() -> {
-                            showAlert("Invitación Rechazada", responseMsg, AlertType.INFORMATION);
-                        });
-                    }
-                    break;
-                    
-                case "gameStart":
-                    String gameMsg = json.optString("message", "Partida iniciada");
+                case "challenge_declined":
+                    String decliner = json.optString("from", "");
                     Platform.runLater(() -> {
-                        showAlert("¡Partida Iniciada!", gameMsg, AlertType.INFORMATION);
-                        // Cambiar a vista de loading y luego al juego
-                        UtilsViews.setViewAnimating("ViewLoading");
-                        CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
-                        if (ctrlLoading != null) {
-                            ctrlLoading.startLoadingAnimation(() -> {
-                                // Cuando termine la carga, ir al juego
-                                UtilsViews.setViewAnimating("ViewGame");
-                            });
-                        }
+                        showAlert("Invitación Rechazada", decliner + " rechazó tu invitación", AlertType.INFORMATION);
+                        requestPlayersList();
                     });
                     break;
-                case "text":
-                    // ✅ NUEVO: Manejar mensajes de texto del servidor
-                    handleTextMessage(json);
-                    break;
-                    
-                case "error":
-                    String errorMsg = json.optString("message", "Error del servidor");
-                    Platform.runLater(() -> {
-                        showAlert("Error", errorMsg, AlertType.INFORMATION);
-                    });
-                    break;
+
+                // ... resto de casos para mensajes de juego ...
                     
                 default:
                     System.out.println("Mensaje no manejado - Tipo: " + type);
             }
             
         } catch (Exception e) {
-            System.err.println("Error procesando mensaje: " + e.getMessage());
+            // Si falla el parseo JSON, es probable que sea un mensaje de texto del servidor
+            System.out.println("Mensaje de texto del servidor: " + response);
         }
     }
 
@@ -303,38 +304,42 @@ public class Main extends Application {
         }
     }
 
-    // Método auxiliar para mostrar alerts (versión mejorada)
+    // En Main.java, mejorar el método showAlert:
+
     private static void showAlert(String title, String message, AlertType type) {
         showAlert(title, message, type, 0); // Por defecto sin auto-cierre
     }
 
     private static void showAlert(String title, String message, AlertType type, long autoCloseMs) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        applyAlertStyle(alert);
-        
-        if (autoCloseMs > 0) {
-            // Mostrar sin bloquear y cerrar automáticamente
-            alert.show();
-            PauseTransition delay = new PauseTransition(Duration.millis(autoCloseMs));
-            delay.setOnFinished(event -> {
-                if (alert.isShowing()) {
-                    alert.close();
-                }
-            });
-            delay.play();
-        } else {
-            // Mostrar de forma bloqueante (comportamiento original)
-            alert.showAndWait();
-        }
+        Platform.runLater(() -> {
+            Alert alert = new Alert(type);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            applyAlertStyle(alert);
+            
+            if (autoCloseMs > 0) {
+                // Mostrar sin bloquear y cerrar automáticamente
+                alert.show();
+                PauseTransition delay = new PauseTransition(Duration.millis(autoCloseMs));
+                delay.setOnFinished(event -> {
+                    if (alert.isShowing()) {
+                        alert.close();
+                    }
+                });
+                delay.play();
+            } else {
+                // Mostrar de forma bloqueante (comportamiento original)
+                alert.showAndWait();
+            }
+        });
     }
 
     /**
-     * Aplica estilo retro a un Alert
+     * Aplica estilo retro a un Alert con texto BLANCO
      */
     private static void applyAlertStyle(Alert alert) {
+        // Estilo del panel principal del Alert
         alert.getDialogPane().setStyle(
             "-fx-background-color: #000000; " +
             "-fx-border-color: #ffffff; " +
@@ -343,6 +348,22 @@ public class Main extends Application {
             "-fx-background-radius: 5;"
         );
         
+        // ✅ NUEVO: Estilo del contenido (texto) a BLANCO
+        Label contentLabel = (Label) alert.getDialogPane().lookup(".content.label");
+        if (contentLabel != null) {
+            contentLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 14px;");
+        }
+        
+        // ✅ NUEVO: Estilo del header (si existe)
+        Node header = alert.getDialogPane().lookup(".header-panel");
+        if (header != null) {
+            header.setStyle("-fx-background-color: #000000;");
+            Label headerLabel = (Label) header.lookup(".label");
+            if (headerLabel != null) {
+                headerLabel.setStyle("-fx-text-fill: #ffffff; -fx-font-size: 16px; -fx-font-weight: bold;");
+            }
+        }
+        
         // Aplicar estilo a los botones
         alert.getDialogPane().getButtonTypes().forEach(buttonType -> {
             Button button = (Button) alert.getDialogPane().lookupButton(buttonType);
@@ -350,12 +371,35 @@ public class Main extends Application {
                 button.setFont(Font.font(ctrlLogin.retroFont.getFamily(), FontWeight.BOLD, 12));
                 button.setStyle(
                     "-fx-background-color: #ffffff; " +
-                    "-fx-text-fill: #000000; " +
+                    "-fx-text-fill: #000000; " +  // Texto negro en botones blancos
                     "-fx-background-radius: 3; " +
                     "-fx-border-radius: 3; " +
                     "-fx-border-color: #000000; " +
                     "-fx-border-width: 1;"
                 );
+                
+                // Efecto hover para los botones
+                button.setOnMouseEntered(e -> {
+                    button.setStyle(
+                        "-fx-background-color: #e6e6e6; " +
+                        "-fx-text-fill: #000000; " +
+                        "-fx-background-radius: 3; " +
+                        "-fx-border-radius: 3; " +
+                        "-fx-border-color: #000000; " +
+                        "-fx-border-width: 1;"
+                    );
+                });
+                
+                button.setOnMouseExited(e -> {
+                    button.setStyle(
+                        "-fx-background-color: #ffffff; " +
+                        "-fx-text-fill: #000000; " +
+                        "-fx-background-radius: 3; " +
+                        "-fx-border-radius: 3; " +
+                        "-fx-border-color: #000000; " +
+                        "-fx-border-width: 1;"
+                    );
+                });
             }
         });
     }

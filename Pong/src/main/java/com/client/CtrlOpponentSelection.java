@@ -179,6 +179,8 @@ public class CtrlOpponentSelection implements Initializable {
     }
     
     // ✅ NUEVO MÉTODO para manejar JSONArray (como la Raspberry Pi)
+    // En el método updatePlayersList, filtrar la Raspberry Pi:
+
     public void updatePlayersList(JSONArray playersArray) {
         Platform.runLater(() -> {
             System.out.println("Actualizando lista de jugadores desde JSONArray...");
@@ -195,17 +197,32 @@ public class CtrlOpponentSelection implements Initializable {
             int availablePlayers = 0;
             String currentPlayer = Main.ctrlLogin.getUserName();
             
-            // Procesar el JSONArray igual que en la Raspberry Pi
+            // Procesar el JSONArray y filtrar jugadores no disponibles
             for (int i = 0; i < playersArray.length(); i++) {
                 try {
                     String player = playersArray.getString(i);
                     
-                    // Solo mostrar jugadores que no sean yo mismo
-                    if (player != null && !player.equals(currentPlayer) && !player.isEmpty()) {
-                        listPlayers.getItems().add(player);
-                        availablePlayers++;
-                        System.out.println("Añadido jugador: " + player);
+                    // ✅ FILTRAR: No mostrar al propio jugador
+                    if (player.equals(currentPlayer)) {
+                        continue;
                     }
+                    
+                    // ✅ FILTRAR: No mostrar la Raspberry Pi/Pantalla
+                    if (isRaspberryPi(player)) {
+                        System.out.println("Ocultando Raspberry Pi: " + player);
+                        continue;
+                    }
+                    
+                    // ✅ FILTRAR: No mostrar jugadores vacíos
+                    if (player == null || player.isEmpty()) {
+                        continue;
+                    }
+                    
+                    // ✅ JUGADOR VÁLIDO - Añadir a la lista
+                    listPlayers.getItems().add(player);
+                    availablePlayers++;
+                    System.out.println("Añadido jugador: " + player);
+                    
                 } catch (Exception e) {
                     System.err.println("Error procesando jugador en índice " + i + ": " + e.getMessage());
                 }
@@ -222,6 +239,19 @@ public class CtrlOpponentSelection implements Initializable {
             
             System.out.println("Lista actualizada. Jugadores disponibles: " + availablePlayers);
         });
+    }
+
+    // ✅ NUEVO MÉTODO: Detectar si un jugador es la Raspberry Pi
+    private boolean isRaspberryPi(String playerName) {
+        if (playerName == null) return false;
+        
+        String lowerName = playerName.toLowerCase();
+        return lowerName.contains("pantalla") || 
+            lowerName.contains("raspberry") || 
+            lowerName.contains("pi") ||
+            lowerName.contains("matrix") ||
+            lowerName.equals("screen") ||
+            lowerName.equals("display");
     }
     
     private void sendInvitation(String opponentName) {
@@ -276,21 +306,23 @@ public class CtrlOpponentSelection implements Initializable {
         }).start();
     }
     
+    // En el método handleIncomingInvitation, actualizar el mensaje:
+
     public void handleIncomingInvitation(String fromPlayer) {
-        Alert alert = new Alert(AlertType.CONFIRMATION);
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Invitación de Partida");
         alert.setHeaderText("¡Invitación recibida!");
-        alert.setContentText("¿Aceptas jugar contra " + fromPlayer + "?");
+        alert.setContentText("¿Aceptas jugar contra " + fromPlayer + "?\n\nLa partida comenzará inmediatamente después de aceptar.");
         
-        // Aplicar estilo retro al alert
         applyAlertStyle(alert);
         
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 acceptInvitation(fromPlayer);
+                updateStatus("Aceptando invitación de " + fromPlayer + "...");
             } else {
                 rejectInvitation(fromPlayer);
-                updateStatus("Rechazada invitación de " + fromPlayer);
+                updateStatus("Invitación rechazada");
             }
         });
     }

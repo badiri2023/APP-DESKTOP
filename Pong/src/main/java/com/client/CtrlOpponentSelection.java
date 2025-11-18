@@ -257,7 +257,7 @@ public class CtrlOpponentSelection implements Initializable {
     private void sendInvitation(String opponentName) {
         try {
             JSONObject invitation = new JSONObject();
-            invitation.put("type", "challenge"); // ✅ CORREGIDO: "challenge" en lugar de "clientInvite"
+            invitation.put("type", "challenge"); // 
             invitation.put("to", opponentName);
             // El servidor añadirá automáticamente el campo "from" con nuestro nombre
             
@@ -309,47 +309,6 @@ public class CtrlOpponentSelection implements Initializable {
                 Thread.currentThread().interrupt();
             }
         }).start();
-    }
-    
-    // En el método handleIncomingInvitation, actualizar el mensaje:
-
-    public void handleIncomingInvitation(String fromPlayer) {
-        // ✅ USAR MÉTODO DEL MAIN: Crear Alert de confirmación
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Invitación de Partida");
-        alert.setHeaderText("¡Invitación recibida!");
-        alert.setContentText("¿Aceptas jugar contra " + fromPlayer + "?\n\nLa partida comenzará inmediatamente después de aceptar.");
-        
-        // ✅ USAR MÉTODO DEL MAIN: Aplicar estilo
-        Main.applyAlertStyle(alert);
-        
-        alert.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                acceptInvitation(fromPlayer);
-                updateStatus("Aceptando invitación de " + fromPlayer + "...");
-            } else {
-                rejectInvitation(fromPlayer);
-                updateStatus("Invitación rechazada");
-            }
-        });
-    }
-    
-    private void acceptInvitation(String fromPlayer) {
-        try {
-            JSONObject response = new JSONObject();
-            response.put("type", "challenge_response"); // ✅ CORREGIDO: "challenge_response"
-            response.put("to", fromPlayer);
-            response.put("accepted", true);
-            
-            Main.wsClient.safeSend(response.toString());
-            updateStatus("Aceptada invitación de " + fromPlayer);
-            
-            // ✅ ELIMINADO: No cambiar vista aquí, esperar "game_start" del servidor
-            // El servidor enviará "game_start" cuando cree la GameSession
-            
-        } catch (Exception e) {
-            System.err.println("Error aceptando invitación: " + e.getMessage());
-        }
     }
 
     private void rejectInvitation(String fromPlayer) {

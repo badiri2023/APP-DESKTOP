@@ -195,7 +195,7 @@ public class Main extends Application {
         try {
             System.out.println("Mensaje recibido del servidor: " + response);
             
-            // ✅ PRIMERO: Manejar respuestas de texto plano del registro
+            // Manejar respuestas de texto plano del registro
             if ("ACCEPTED".equals(response)) {
                 Platform.runLater(() -> {
                     System.out.println("✅ Registro aceptado por el servidor");
@@ -212,7 +212,7 @@ public class Main extends Application {
                 return;
             }
             
-            // ✅ SEGUNDO: Si no es texto plano, intentar procesar como JSON
+            // Si no es texto plano, intentar procesar como JSON
             JSONObject json = new JSONObject(response);
             String type = json.optString("type", "");
             
@@ -239,7 +239,7 @@ public class Main extends Application {
                     }
                     break;
                     
-                // ✅ CORREGIDO: El servidor envía "challenge_received" pero el cliente esperaba otro nombre
+                // El servidor envía "challenge_received" pero el cliente esperaba otro nombre
                 case "challenge_received":
                     String fromPlayer = json.optString("from", "");
                     if (!fromPlayer.isEmpty()) {
@@ -262,7 +262,7 @@ public class Main extends Application {
                     });
                     break;
 
-                // ✅ JUEGO - FLUJO PRINCIPAL
+                // JUEGO - FLUJO PRINCIPAL
                 case "game_start":
                     String opponent = json.optString("opponent", "");
                     String role = json.optString("role", "");
@@ -363,7 +363,7 @@ public class Main extends Application {
         }
     }
 
-    // ✅ NUEVO MÉTODO: Mostrar diálogo de invitación entrante
+    //  Mostrar diálogo de invitación entrante
     private static void showIncomingInvitationDialog(String fromPlayer) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Invitación de Partida");
@@ -383,22 +383,19 @@ public class Main extends Application {
         });
     }
 
-    // ✅ NUEVO MÉTODO: Aceptar invitación entrante
+    //  Aceptar invitación entrante
     private static void acceptIncomingInvitation(String fromPlayer) {
         try {
             JSONObject response = new JSONObject();
             response.put("type", "challenge_response");
-            response.put("to", fromPlayer);
+            response.put("to", fromPlayer); 
             response.put("accepted", true);
+            
+            System.out.println("📤 Enviando respuesta de invitación: " + response.toString());
             
             if (wsClient != null && wsClient.isOpen()) {
                 wsClient.safeSend(response.toString());
                 System.out.println("✅ Invitación aceptada - Enviando respuesta al servidor");
-                
-                // Mostrar mensaje de espera
-                Main.showAlert("Invitación Aceptada", 
-                            "Has aceptado jugar contra " + fromPlayer + ". Iniciando partida...", 
-                            AlertType.INFORMATION);
             }
         } catch (Exception e) {
             System.err.println("Error aceptando invitación: " + e.getMessage());

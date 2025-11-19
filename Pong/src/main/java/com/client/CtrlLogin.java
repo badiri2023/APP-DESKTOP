@@ -55,9 +55,9 @@ public class CtrlLogin implements Initializable {
             // Intentar cargar fuente retro
             try {
                 retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/8bitOperatorPlus8-Regular.ttf"), 14);
-                System.out.println("✅ Fuente cargada: " + retroFont.getFamily());
+                System.out.println("Fuente cargada: " + retroFont.getFamily());
             } catch (Exception e) {
-                System.out.println("❌ No se pudo cargar fuente 8bitOperatorPlus8: " + e.getMessage());
+                System.out.println("No se pudo cargar fuente 8bitOperatorPlus8: " + e.getMessage());
                 retroFont = Font.font("Consolas", 14);
             }
             

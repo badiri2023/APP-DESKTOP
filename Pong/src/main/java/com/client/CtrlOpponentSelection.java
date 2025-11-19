@@ -47,15 +47,18 @@ public class CtrlOpponentSelection implements Initializable {
     public static boolean invitationPending = false;
     public static String pendingOpponent = "";
 
+    public String selectedPlayer;
+    public String currentPlayer;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         try {
             // Cargar fuente retro
             try {
                 retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/8bitOperatorPlus8-Regular.ttf"), 14);
-                System.out.println("✅ Fuente cargada en OpponentSelection: " + retroFont.getFamily());
+                System.out.println("Fuente cargada en OpponentSelection: " + retroFont.getFamily());
             } catch (Exception e) {
-                System.out.println("❌ No se pudo cargar fuente 8bitOperatorPlus8: " + e.getMessage());
+                System.out.println("No se pudo cargar fuente 8bitOperatorPlus8: " + e.getMessage());
                 retroFont = Font.font("Consolas", 14);
             }
             
@@ -160,7 +163,7 @@ public class CtrlOpponentSelection implements Initializable {
     private void setupPlayersList() {
         listPlayers.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
-                String selectedPlayer = listPlayers.getSelectionModel().getSelectedItem();
+                selectedPlayer = listPlayers.getSelectionModel().getSelectedItem();
                 if (selectedPlayer != null && !selectedPlayer.equals(Main.ctrlLogin.getUserName())) {
                     sendInvitation(selectedPlayer);
                 }
@@ -178,7 +181,7 @@ public class CtrlOpponentSelection implements Initializable {
         }
     }
     
-    // ✅ NUEVO MÉTODO para manejar JSONArray (como la Raspberry Pi)
+    // NUEVO MÉTODO para manejar JSONArray (como la Raspberry Pi)
     // En el método updatePlayersList, filtrar la Raspberry Pi:
 
     public void updatePlayersList(JSONArray playersArray) {
@@ -189,27 +192,27 @@ public class CtrlOpponentSelection implements Initializable {
             listPlayers.getItems().clear();
             
             int availablePlayers = 0;
-            String currentPlayer = Main.ctrlLogin.getUserName();
+            currentPlayer = Main.ctrlLogin.getUserName();
             System.out.println("👤 Mi nombre: " + currentPlayer);
             
             for (int i = 0; i < playersArray.length(); i++) {
                 try {
                     String player = playersArray.getString(i);
-                    System.out.println("👥 Jugador en lista: " + player);
+                    System.out.println("Jugador en lista: " + player);
                     
                     if (player.equals(currentPlayer)) {
-                        System.out.println("❌ Filtrado: soy yo mismo");
+                        System.out.println("Filtrado: soy yo mismo");
                         continue;
                     }
                     
                     if (isRaspberryPi(player)) {
-                        System.out.println("❌ Filtrado: es Raspberry Pi");
+                        System.out.println("Filtrado: es Raspberry Pi");
                         continue;
                     }
                     
                     listPlayers.getItems().add(player);
                     availablePlayers++;
-                    System.out.println("✅ Añadido a lista: " + player);
+                    System.out.println("Añadido a lista: " + player);
                     
                 } catch (Exception e) {
                     System.err.println("Error procesando jugador: " + e.getMessage());
@@ -220,7 +223,6 @@ public class CtrlOpponentSelection implements Initializable {
         });
     }
 
-    // ✅ NUEVO MÉTODO: Detectar si un jugador es la Raspberry Pi
     private boolean isRaspberryPi(String playerName) {
         if (playerName == null) return false;
         
@@ -241,10 +243,10 @@ public class CtrlOpponentSelection implements Initializable {
             JSONObject invitation = new JSONObject();
             invitation.put("type", "challenge");
             invitation.put("to", opponentName);
-            invitation.put("from", myName);  // ✅ AÑADIR ESTO
+            invitation.put("from", myName);  
             
             String invitationStr = invitation.toString();
-            System.out.println("📤 Mensaje JSON enviado: " + invitationStr);
+            System.out.println("Mensaje JSON enviado: " + invitationStr);
             
             Main.wsClient.safeSend(invitationStr);
             
@@ -252,10 +254,10 @@ public class CtrlOpponentSelection implements Initializable {
             pendingOpponent = opponentName;
             startInvitationTimeout(opponentName);
             
-            System.out.println("✅ Invitación enviada correctamente");
+            System.out.println("Invitación enviada correctamente");
             
         } catch (Exception e) {
-            System.err.println("❌ Error enviando invitación: " + e.getMessage());
+            System.err.println("Error enviando invitación: " + e.getMessage());
             e.printStackTrace();
         }
     }

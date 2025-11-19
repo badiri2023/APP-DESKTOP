@@ -33,6 +33,8 @@ public class CtrlGame implements Initializable {
 
     @FXML private Label player1ScoreLabel;
     @FXML private Label player2ScoreLabel;
+    @FXML private Label player1Label;
+    @FXML private Label player2Label;
     @FXML private Label countdownLabel;
     @FXML private VBox countdownOverlay;
     
@@ -123,12 +125,35 @@ public class CtrlGame implements Initializable {
         this.opponentName = opponent;
         System.out.println("Rol asignado: " + role + ", Oponente: " + opponent);
         
+        // Obtener nombre del jugador actual
+        String currentPlayerName = Main.ctrlLogin.getUserName();
+        String selectedPlayerName = opponent;
+        
+        // Asignar nombres a labels según el rol
+        if ("p1".equals(role)) {
+            // Este jugador es P1 (izquierda)
+            if (player1Label != null) {
+                player1Label.setText(currentPlayerName);
+            }
+            if (player2Label != null) {
+                player2Label.setText(selectedPlayerName);
+            }
+        } else {
+            // Este jugador es P2 (derecha)
+            if (player1Label != null) {
+                player1Label.setText(selectedPlayerName);
+            }
+            if (player2Label != null) {
+                player2Label.setText(currentPlayerName);
+            }
+        }
+        
         // Actualizar interfaz según el rol
         if (scoreLabel != null) {
             if ("p1".equals(role)) {
-                scoreLabel.setText(Main.ctrlLogin.getUserName() + " vs " + opponent);
+                scoreLabel.setText(currentPlayerName + " vs " + selectedPlayerName);
             } else {
-                scoreLabel.setText(opponent + " vs " + Main.ctrlLogin.getUserName());
+                scoreLabel.setText(selectedPlayerName + " vs " + currentPlayerName);
             }
         }
     }
@@ -229,7 +254,7 @@ public class CtrlGame implements Initializable {
         
         // Solo procesar movimientos si el juego está activo
         if (!gameActive || !"playing".equals(currentPhase)) {
-            System.out.println("❌ Movimiento ignorado - Juego no activo o fase incorrecta");
+            System.out.println("Movimiento ignorado - Juego no activo o fase incorrecta");
             return;
         }
         
@@ -239,17 +264,17 @@ public class CtrlGame implements Initializable {
         if (event.getCode() == KeyCode.UP) {
             moveDelta = -0.05;
             moved = true;
-            System.out.println("⬆️ Moviendo hacia ARRIBA - Delta: " + moveDelta);
+            System.out.println("Moviendo hacia ARRIBA - Delta: " + moveDelta);
         } else if (event.getCode() == KeyCode.DOWN) {
             moveDelta = 0.05;
             moved = true;
-            System.out.println("⬇️ Moviendo hacia ABAJO - Delta: " + moveDelta);
+            System.out.println("Moviendo hacia ABAJO - Delta: " + moveDelta);
         }
         
         if (moved) {
             sendMoveToServer(moveDelta);
         } else {
-            System.out.println("❌ Tecla no reconocida para movimiento");
+            System.out.println("Tecla no reconocida para movimiento");
         }
         
         event.consume();
@@ -263,10 +288,10 @@ public class CtrlGame implements Initializable {
             double currentY;
             if ("p1".equals(playerRole)) {
                 currentY = player1Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
-                System.out.println("👤 Jugador P1 - CurrentY: " + currentY);
+                System.out.println("Jugador P1 - CurrentY: " + currentY);
             } else {
                 currentY = player2Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
-                System.out.println("👤 Jugador P2 - CurrentY: " + currentY);
+                System.out.println("Jugador P2 - CurrentY: " + currentY);
             }
             
             double newY = Math.max(0, Math.min(1, currentY + delta));
@@ -280,11 +305,11 @@ public class CtrlGame implements Initializable {
             System.out.println("MENSAJE JSON A ENVIAR: " + message);
             
             if (Main.wsClient != null) {
-                System.out.println("🔌 WebSocket estado: " + (Main.wsClient.isOpen() ? "CONECTADO" : "DESCONECTADO"));
+                System.out.println("WebSocket estado: " + (Main.wsClient.isOpen() ? "CONECTADO" : "DESCONECTADO"));
                 Main.wsClient.safeSend(message);
-                System.out.println("✅ Mensaje enviado al servidor");
+                System.out.println("Mensaje enviado al servidor");
             } else {
-                System.out.println("❌ ERROR: WebSocket client es NULL");
+                System.out.println("ERROR: WebSocket client es NULL");
             }
             
         } catch (Exception e) {

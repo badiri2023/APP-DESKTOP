@@ -18,12 +18,12 @@
          
          <!-- Jugador 1 -->
          <VBox alignment="CENTER" spacing="5.0">
-            <Label text="JUGADOR 1" style="-fx-text-fill: #ffffff;">
+            <Label fx:id="player1Label" style="-fx-text-fill: #ffffff;" text="JUGADOR 1">
                <font>
                   <Font name="8bitOperatorPlus8-Regular" size="14.0" />
                </font>
             </Label>
-            <Label fx:id="player1ScoreLabel" text="0" style="-fx-text-fill: #ffffff;">
+            <Label fx:id="player1ScoreLabel" style="-fx-text-fill: #ffffff;" text="0">
                <font>
                   <Font name="8bitOperatorPlus8-Regular" size="24.0" />
                </font>
@@ -31,21 +31,21 @@
          </VBox>
          
          <!-- VS -->
-         <Label text="VS" style="-fx-text-fill: #ffcc00;">
+         <Label style="-fx-text-fill: #ffcc00;" text="VS">
             <font>
                <Font name="8bitOperatorPlus8-Regular" size="18.0" />
             </font>
          </Label>
          
          <!-- Marcador central -->
-         <Label fx:id="scoreLabel" text="0 : 0" style="-fx-text-fill: #ffffff;">
+         <Label fx:id="scoreLabel" style="-fx-text-fill: #ffffff;" text="0 : 0">
             <font>
                <Font name="8bitOperatorPlus8-Regular" size="32.0" />
             </font>
          </Label>
          
          <!-- VS -->
-         <Label text="VS" style="-fx-text-fill: #ffcc00;">
+         <Label style="-fx-text-fill: #ffcc00;" text="VS">
             <font>
                <Font name="8bitOperatorPlus8-Regular" size="18.0" />
             </font>
@@ -53,12 +53,12 @@
          
          <!-- Jugador 2 -->
          <VBox alignment="CENTER" spacing="5.0">
-            <Label text="JUGADOR 2" style="-fx-text-fill: #ffffff;">
+            <Label fx:id="player2Label" style="-fx-text-fill: #ffffff;" text="JUGADOR 2">
                <font>
                   <Font name="8bitOperatorPlus8-Regular" size="14.0" />
                </font>
             </Label>
-            <Label fx:id="player2ScoreLabel" text="0" style="-fx-text-fill: #ffffff;">
+            <Label fx:id="player2ScoreLabel" style="-fx-text-fill: #ffffff;" text="0">
                <font>
                   <Font name="8bitOperatorPlus8-Regular" size="24.0" />
                </font>
@@ -71,7 +71,7 @@
       
       <!-- Mensaje de cuenta regresiva (overlay) -->
       <VBox fx:id="countdownOverlay" alignment="CENTER" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-         <Label fx:id="countdownLabel" text="3" style="-fx-text-fill: #ffffff; -fx-font-size: 72px;">
+         <Label fx:id="countdownLabel" style="-fx-text-fill: #ffffff; -fx-font-size: 72px;" text="3">
             <font>
                <Font name="8bitOperatorPlus8-Regular" size="72.0" />
             </font>

@@ -198,7 +198,7 @@ public class Main extends Application {
             // Manejar respuestas de texto plano del registro
             if ("ACCEPTED".equals(response)) {
                 Platform.runLater(() -> {
-                    System.out.println("✅ Registro aceptado por el servidor");
+                    System.out.println("Registro aceptado por el servidor");
                     requestPlayersList();
                 });
                 return;
@@ -206,7 +206,7 @@ public class Main extends Application {
             
             if ("REJECTED".equals(response)) {
                 Platform.runLater(() -> {
-                    System.err.println("❌ Registro rechazado por el servidor");
+                    System.err.println("Registro rechazado por el servidor");
                     Main.showAlert("Registro Rechazado", "El nombre de usuario ya está en uso o es inválido", AlertType.ERROR);
                 });
                 return;
@@ -388,11 +388,11 @@ public class Main extends Application {
             response.put("to", fromPlayer); 
             response.put("accepted", true);
             
-            System.out.println("📤 Enviando respuesta de invitación: " + response.toString());
+            System.out.println("Enviando respuesta de invitación: " + response.toString());
             
             if (wsClient != null && wsClient.isOpen()) {
                 wsClient.safeSend(response.toString());
-                System.out.println("✅ Invitación aceptada - Enviando respuesta al servidor");
+                System.out.println("Invitación aceptada - Enviando respuesta al servidor");
             }
         } catch (Exception e) {
             System.err.println("Error aceptando invitación: " + e.getMessage());
@@ -400,7 +400,6 @@ public class Main extends Application {
         }
     }
 
-    // ✅ NUEVO MÉTODO: Rechazar invitación entrante
     private static void rejectIncomingInvitation(String fromPlayer) {
         try {
             JSONObject response = new JSONObject();
@@ -410,7 +409,7 @@ public class Main extends Application {
             
             if (wsClient != null && wsClient.isOpen()) {
                 wsClient.safeSend(response.toString());
-                System.out.println("❌ Invitación rechazada - Enviando respuesta al servidor");
+                System.out.println("Invitación rechazada - Enviando respuesta al servidor");
             }
         } catch (Exception e) {
             System.err.println("Error rechazando invitación: " + e.getMessage());

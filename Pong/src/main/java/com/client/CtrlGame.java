@@ -222,31 +222,34 @@ public class CtrlGame implements Initializable {
     }
     
     private void handleKeyPress(KeyEvent event) {
+        System.out.println("TECLA PRESIONADA: " + event.getCode() + 
+                        " | GameActive: " + gameActive + 
+                        " | Phase: " + currentPhase +
+                        " | Role: " + playerRole);
+        
         // Solo procesar movimientos si el juego está activo
         if (!gameActive || !"playing".equals(currentPhase)) {
-            System.out.println("❌ Movimiento ignorado - Juego no activo");
+            System.out.println("❌ Movimiento ignorado - Juego no activo o fase incorrecta");
             return;
         }
-        
-        System.out.println("🎯 Tecla presionada: " + event.getCode());
         
         double moveDelta = 0;
         boolean moved = false;
         
-        // Control para ambos jugadores (usando flechas)
         if (event.getCode() == KeyCode.UP) {
             moveDelta = -0.05;
             moved = true;
-            System.out.println("⬆️ Moviendo hacia arriba");
+            System.out.println("⬆️ Moviendo hacia ARRIBA - Delta: " + moveDelta);
         } else if (event.getCode() == KeyCode.DOWN) {
             moveDelta = 0.05;
             moved = true;
-            System.out.println("⬇️ Moviendo hacia abajo");
+            System.out.println("⬇️ Moviendo hacia ABAJO - Delta: " + moveDelta);
         }
         
-        // Enviar movimiento al servidor
         if (moved) {
             sendMoveToServer(moveDelta);
+        } else {
+            System.out.println("❌ Tecla no reconocida para movimiento");
         }
         
         event.consume();
@@ -254,26 +257,39 @@ public class CtrlGame implements Initializable {
 
     private void sendMoveToServer(double delta) {
         try {
+            System.out.println("PREPARANDO ENVÍO DE MOVIMIENTO...");
+            
             // Calcular nueva posición (0-1)
-            double currentY = "p1".equals(playerRole) ? 
-                player1Y / (FIELD_HEIGHT - PADDLE_HEIGHT) : 
-                player2Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
+            double currentY;
+            if ("p1".equals(playerRole)) {
+                currentY = player1Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
+                System.out.println("👤 Jugador P1 - CurrentY: " + currentY);
+            } else {
+                currentY = player2Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
+                System.out.println("👤 Jugador P2 - CurrentY: " + currentY);
+            }
+            
             double newY = Math.max(0, Math.min(1, currentY + delta));
+            System.out.println("Nueva posición calculada: " + newY + " (Delta: " + delta + ")");
             
             JSONObject moveMsg = new JSONObject();
             moveMsg.put("type", "move");
             moveMsg.put("y_pos", newY);
             
-            System.out.println("📤 Enviando movimiento: " + moveMsg.toString());
+            String message = moveMsg.toString();
+            System.out.println("MENSAJE JSON A ENVIAR: " + message);
             
-            if (Main.wsClient != null && Main.wsClient.isOpen()) {
-                Main.wsClient.safeSend(moveMsg.toString());
-                System.out.println("✅ Movimiento enviado al servidor");
+            if (Main.wsClient != null) {
+                System.out.println("🔌 WebSocket estado: " + (Main.wsClient.isOpen() ? "CONECTADO" : "DESCONECTADO"));
+                Main.wsClient.safeSend(message);
+                System.out.println("✅ Mensaje enviado al servidor");
             } else {
-                System.out.println("❌ WebSocket no conectado");
+                System.out.println("❌ ERROR: WebSocket client es NULL");
             }
+            
         } catch (Exception e) {
-            System.err.println("❌ Error enviando movimiento: " + e.getMessage());
+            System.err.println("ERROR CRÍTICO en sendMoveToServer: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     

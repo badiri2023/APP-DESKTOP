@@ -134,7 +134,9 @@ public class CtrlGame implements Initializable {
     }
     
     public void updateGameState(double p1Y, double p2Y, double ballX, double ballY, int score1, int score2) {
-        // Solo actualizar estado si estamos en fase de juego activo
+        System.out.println("Actualizando estado - P1Y: " + p1Y + " P2Y: " + p2Y + 
+                        " Ball: " + ballX + "," + ballY + " Score: " + score1 + "-" + score2);
+        
         if ("playing".equals(currentPhase)) {
             this.player1Y = p1Y * (FIELD_HEIGHT - PADDLE_HEIGHT);
             this.player2Y = p2Y * (FIELD_HEIGHT - PADDLE_HEIGHT);
@@ -206,7 +208,14 @@ public class CtrlGame implements Initializable {
     
     private void setupControls() {
         gameContainer.setFocusTraversable(true);
-        gameContainer.requestFocus();
+        gameContainer.requestFocus(); 
+        
+        // Añade un listener para cuando se gana/recupera el focus
+        gameContainer.focusedProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                System.out.println("Game container con focus");
+            }
+        });
         
         gameContainer.setOnKeyPressed(this::handleKeyPress);
         gameContainer.setOnKeyReleased(this::handleKeyRelease);
@@ -215,31 +224,24 @@ public class CtrlGame implements Initializable {
     private void handleKeyPress(KeyEvent event) {
         // Solo procesar movimientos si el juego está activo
         if (!gameActive || !"playing".equals(currentPhase)) {
+            System.out.println("❌ Movimiento ignorado - Juego no activo");
             return;
         }
+        
+        System.out.println("🎯 Tecla presionada: " + event.getCode());
         
         double moveDelta = 0;
         boolean moved = false;
         
-        // ✅ CONTROL ESPECÍFICO POR ROL (opcional)
-        if ("p1".equals(playerRole)) {
-            // Jugador 1 (izquierda) - solo flechas
-            if (event.getCode() == KeyCode.UP) {
-                moveDelta = -0.05;
-                moved = true;
-            } else if (event.getCode() == KeyCode.DOWN) {
-                moveDelta = 0.05;
-                moved = true;
-            }
-        } else if ("p2".equals(playerRole)) {
-            // Jugador 2 (derecha) - también solo flechas
-            if (event.getCode() == KeyCode.UP) {
-                moveDelta = -0.05;
-                moved = true;
-            } else if (event.getCode() == KeyCode.DOWN) {
-                moveDelta = 0.05;
-                moved = true;
-            }
+        // Control para ambos jugadores (usando flechas)
+        if (event.getCode() == KeyCode.UP) {
+            moveDelta = -0.05;
+            moved = true;
+            System.out.println("⬆️ Moviendo hacia arriba");
+        } else if (event.getCode() == KeyCode.DOWN) {
+            moveDelta = 0.05;
+            moved = true;
+            System.out.println("⬇️ Moviendo hacia abajo");
         }
         
         // Enviar movimiento al servidor
@@ -249,7 +251,7 @@ public class CtrlGame implements Initializable {
         
         event.consume();
     }
-    
+
     private void sendMoveToServer(double delta) {
         try {
             // Calcular nueva posición (0-1)
@@ -262,11 +264,16 @@ public class CtrlGame implements Initializable {
             moveMsg.put("type", "move");
             moveMsg.put("y_pos", newY);
             
+            System.out.println("📤 Enviando movimiento: " + moveMsg.toString());
+            
             if (Main.wsClient != null && Main.wsClient.isOpen()) {
                 Main.wsClient.safeSend(moveMsg.toString());
+                System.out.println("✅ Movimiento enviado al servidor");
+            } else {
+                System.out.println("❌ WebSocket no conectado");
             }
         } catch (Exception e) {
-            System.err.println("Error enviando movimiento al servidor: " + e.getMessage());
+            System.err.println("❌ Error enviando movimiento: " + e.getMessage());
         }
     }
     

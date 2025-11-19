@@ -74,11 +74,9 @@ public class Main extends Application {
 
             try {
                 UtilsViews.addView(getClass(), "ViewGame", "/assets/viewGame.fxml");
-                System.out.println("✅ Vista Game cargada - Controlador: " + 
-                    (UtilsViews.getController("ViewGame") != null ? "OK" : "NULL"));
+                System.out.println("✅ Vista Game cargada correctamente");
             } catch (Exception e) {
                 System.err.println("❌ Error cargando ViewGame: " + e.getMessage());
-                e.printStackTrace(); // ← Esto te dirá exactamente qué falla
             }
 
             try {

@@ -376,7 +376,7 @@ public class CtrlGame implements Initializable {
         gc.setFill(Color.YELLOW);
         gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 32));
         gc.setTextAlign(TextAlignment.CENTER);
-        gc.fillText("ELEGIENDO JUGADOR INICIAL...", FIELD_WIDTH / 2, FIELD_HEIGHT / 2);
+        gc.fillText("ELIGIENDO JUGADOR INICIAL...", FIELD_WIDTH / 2, FIELD_HEIGHT / 2);
         gc.setTextAlign(TextAlignment.LEFT);
     }
     

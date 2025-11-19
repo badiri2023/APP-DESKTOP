@@ -193,7 +193,7 @@ public class CtrlOpponentSelection implements Initializable {
             
             int availablePlayers = 0;
             currentPlayer = Main.ctrlLogin.getUserName();
-            System.out.println("👤 Mi nombre: " + currentPlayer);
+            System.out.println("Mi nombre: " + currentPlayer);
             
             for (int i = 0; i < playersArray.length(); i++) {
                 try {

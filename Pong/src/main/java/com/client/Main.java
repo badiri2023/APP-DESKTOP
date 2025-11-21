@@ -267,8 +267,7 @@ public class Main extends Application {
                         System.out.println("Iniciando partida - Rol: " + role + ", Oponente: " + opponent);
                         // Limpiar estado de invitación pendiente
                         CtrlOpponentSelection.clearInvitation();
-                        
-                        // ✅ CORREGIDO: Primero ir a ViewLoading, luego a ViewGame
+
                         UtilsViews.setViewAnimating("ViewLoading");
                         
                         // Configurar y iniciar la animación de carga

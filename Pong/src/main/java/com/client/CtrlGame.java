@@ -5,6 +5,8 @@ import java.util.ResourceBundle;
 
 import org.json.JSONObject;
 
+import com.client.enums.GamePhase;
+
 import javafx.animation.AnimationTimer;
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
@@ -49,7 +51,7 @@ public class CtrlGame implements Initializable {
     // Nuevas variables para el flujo mejorado
     private String playerRole = "";
     private String opponentName = "";
-    private String currentPhase = "waiting"; // waiting, choosing, announcing, countdown, playing
+    private GamePhase currentPhase = GamePhase.WAITING;
     
     // Dimensiones del juego
     private final double PADDLE_WIDTH = 15;
@@ -95,19 +97,19 @@ public class CtrlGame implements Initializable {
     // NUEVO MÉTODO: Iniciar secuencia completa del juego
     public void startGameSequence() {
         resetGame();
-        currentPhase = "waiting"; // Cambiar a "waiting" para esperar mensajes del servidor
+        currentPhase = GamePhase.WAITING;
         System.out.println("🎮 Secuencia de juego iniciada - Esperando mensajes del servidor...");
     }
     
     // NUEVO MÉTODO: Mostrar animación de elección de jugador inicial
     public void showChoosingStarter() {
-        currentPhase = "choosing";
+        currentPhase = GamePhase.CHOOSING;
         System.out.println("Servidor eligiendo jugador inicial...");
     }
     
     // NUEVO MÉTODO: Mostrar anuncio de quién inicia
     public void showStarterAnnouncement(String message, long duration) {
-        currentPhase = "announcing";
+        currentPhase = GamePhase.ANNOUNCING;
         countdownValue = message;
         countdownActive = true;
         
@@ -157,12 +159,13 @@ public class CtrlGame implements Initializable {
             }
         }
     }
-    
+
     public void updateGameState(double p1Y, double p2Y, double ballX, double ballY, int score1, int score2) {
         System.out.println("Actualizando estado - P1Y: " + p1Y + " P2Y: " + p2Y + 
                         " Ball: " + ballX + "," + ballY + " Score: " + score1 + "-" + score2);
         
-        if ("playing".equals(currentPhase)) {
+        if (GamePhase.PLAYING == currentPhase) {
+            // ✅ CORREGIDO: Convertir coordenadas normalizadas a píxeles
             this.player1Y = p1Y * (FIELD_HEIGHT - PADDLE_HEIGHT);
             this.player2Y = p2Y * (FIELD_HEIGHT - PADDLE_HEIGHT);
             this.ballX = ballX * (FIELD_WIDTH - BALL_SIZE);
@@ -171,6 +174,9 @@ public class CtrlGame implements Initializable {
             this.player2Score = score2;
             
             updateScoreDisplay();
+            
+            // ✅ NUEVO: Debug para verificar que se actualizan las posiciones
+            System.out.println("Posiciones actualizadas - P1Y_px: " + this.player1Y + " P2Y_px: " + this.player2Y);
         }
     }
     
@@ -178,19 +184,19 @@ public class CtrlGame implements Initializable {
         if ("GO!".equals(value)) {
             countdownActive = false;
             gameActive = true;
-            currentPhase = "playing";
+            currentPhase = GamePhase.PLAYING;
             countdownValue = "";
             System.out.println("¡JUEGO INICIADO!");
         } else {
             countdownActive = true;
             countdownValue = value;
-            currentPhase = "countdown";
+            currentPhase = GamePhase.COUNTDOWN;
         }
     }
     
     public void handleGameOver(String winner, int finalScore1, int finalScore2) {
         gameActive = false;
-        currentPhase = "finished";
+        currentPhase = GamePhase.FINISHED;
         stopGame();
         
         Main.pauseDuring(2000, () -> {
@@ -226,7 +232,7 @@ public class CtrlGame implements Initializable {
         gameActive = false;
         countdownActive = false;
         countdownValue = "";
-        currentPhase = "waiting";
+        currentPhase = GamePhase.WAITING;
         
         updateScoreDisplay();
     }
@@ -245,7 +251,7 @@ public class CtrlGame implements Initializable {
         gameContainer.setOnKeyPressed(this::handleKeyPress);
         gameContainer.setOnKeyReleased(this::handleKeyRelease);
     }
-    
+
     private void handleKeyPress(KeyEvent event) {
         System.out.println("TECLA PRESIONADA: " + event.getCode() + 
                         " | GameActive: " + gameActive + 
@@ -253,7 +259,7 @@ public class CtrlGame implements Initializable {
                         " | Role: " + playerRole);
         
         // Solo procesar movimientos si el juego está activo
-        if (!gameActive || !"playing".equals(currentPhase)) {
+        if (!gameActive || GamePhase.PLAYING != currentPhase) {
             System.out.println("Movimiento ignorado - Juego no activo o fase incorrecta");
             return;
         }
@@ -262,11 +268,11 @@ public class CtrlGame implements Initializable {
         boolean moved = false;
         
         if (event.getCode() == KeyCode.UP) {
-            moveDelta = -0.05;
+            moveDelta = -0.05; 
             moved = true;
             System.out.println("Moviendo hacia ARRIBA - Delta: " + moveDelta);
         } else if (event.getCode() == KeyCode.DOWN) {
-            moveDelta = 0.05;
+            moveDelta = 0.05; 
             moved = true;
             System.out.println("Moviendo hacia ABAJO - Delta: " + moveDelta);
         }
@@ -284,7 +290,7 @@ public class CtrlGame implements Initializable {
         try {
             System.out.println("PREPARANDO ENVÍO DE MOVIMIENTO...");
             
-            // Calcular nueva posición (0-1)
+            //Calcular nueva posición basada en la posición ACTUAL
             double currentY;
             if ("p1".equals(playerRole)) {
                 currentY = player1Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
@@ -308,6 +314,13 @@ public class CtrlGame implements Initializable {
                 System.out.println("WebSocket estado: " + (Main.wsClient.isOpen() ? "CONECTADO" : "DESCONECTADO"));
                 Main.wsClient.safeSend(message);
                 System.out.println("Mensaje enviado al servidor");
+                
+                //Actualizar visualmente la posición localmente también
+                if ("p1".equals(playerRole)) {
+                    player1Y = newY * (FIELD_HEIGHT - PADDLE_HEIGHT);
+                } else {
+                    player2Y = newY * (FIELD_HEIGHT - PADDLE_HEIGHT);
+                }
             } else {
                 System.out.println("ERROR: WebSocket client es NULL");
             }
@@ -340,20 +353,23 @@ public class CtrlGame implements Initializable {
         
         // Dibujar elementos según la fase actual
         switch (currentPhase) {
-            case "choosing":
+            case CHOOSING:
                 drawChoosingPhase();
                 break;
-            case "announcing":
+            case ANNOUNCING:
                 drawAnnouncingPhase();
                 break;
-            case "countdown":
+            case COUNTDOWN:
                 drawCountdownPhase();
                 break;
-            case "playing":
+            case PLAYING:
                 drawPlayingPhase();
                 break;
-            case "waiting":
+            case WAITING:
             default:
+                drawWaitingPhase();
+                break;
+            case FINISHED:
                 drawWaitingPhase();
                 break;
         }

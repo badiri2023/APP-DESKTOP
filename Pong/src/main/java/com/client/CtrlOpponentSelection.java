@@ -271,8 +271,7 @@ public class CtrlOpponentSelection implements Initializable {
                     if (invitationPending && pendingOpponent.equals(opponentName)) {
                         invitationPending = false;
                         pendingOpponent = "";
-                        
-                        // ✅ USAR MÉTODO DEL MAIN: Tiempo agotado
+
                         Main.showAlert("Tiempo Agotado", 
                                     "La invitación a " + opponentName + " ha expirado.", 
                                     AlertType.WARNING);

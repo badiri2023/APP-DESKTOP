@@ -21,6 +21,7 @@ public class CtrlLoading implements Initializable {
     @FXML private ProgressBar loadingBar;
     
     private Timeline loadingTimeline;
+    private Timeline textAnimation;
     private Font retroFont;
 
     @Override
@@ -34,7 +35,6 @@ public class CtrlLoading implements Initializable {
             
             applyStyles();
             // NO iniciar la animación automáticamente - solo cuando se solicite
-            // startLoadingAnimation();
             
         } catch (Exception e) {
             System.err.println("Error en CtrlLoading: " + e.getMessage());
@@ -64,13 +64,19 @@ public class CtrlLoading implements Initializable {
         }
     }
     
-    // Este método debe llamarse explícitamente cuando se necesite
+    /**
+     * Inicia la animación de carga completa con barra de progreso y texto parpadeante
+     * @param onFinished Callback que se ejecuta cuando termina la animación
+     */
     public void startLoadingAnimation(Runnable onFinished) {
+        // Detener animaciones previas si existen
+        stopAllAnimations();
+        
         // Reiniciar la barra de progreso
         loadingBar.setProgress(0);
         
-        // Animación del texto
-        Timeline textAnimation = new Timeline(
+        // Animación del texto (parpadeo)
+        textAnimation = new Timeline(
             new KeyFrame(Duration.ZERO, new KeyValue(loadingText.opacityProperty(), 1.0)),
             new KeyFrame(Duration.seconds(0.5), new KeyValue(loadingText.opacityProperty(), 0.3)),
             new KeyFrame(Duration.seconds(1.0), new KeyValue(loadingText.opacityProperty(), 1.0))
@@ -78,38 +84,101 @@ public class CtrlLoading implements Initializable {
         textAnimation.setCycleCount(Timeline.INDEFINITE);
         textAnimation.play();
         
-        // Animación de la barra de progreso
+        // Animación de la barra de progreso (2.5 segundos)
         loadingTimeline = new Timeline(
             new KeyFrame(Duration.ZERO, new KeyValue(loadingBar.progressProperty(), 0)),
-            new KeyFrame(Duration.seconds(3), new KeyValue(loadingBar.progressProperty(), 1))
+            new KeyFrame(Duration.seconds(2.5), new KeyValue(loadingBar.progressProperty(), 1))
         );
         
         loadingTimeline.setOnFinished(event -> {
-            textAnimation.stop(); // Detener la animación del texto
+            stopAllAnimations();
             if (onFinished != null) {
-                onFinished.run(); // Ejecutar el callback proporcionado
+                onFinished.run();
             }
         });
         
         loadingTimeline.play();
     }
     
+    /**
+     * Muestra solo el mensaje de carga sin animación de progreso (para esperas indeterminadas)
+     * @param message Mensaje a mostrar
+     */
+    public void showLoadingMessage(String message) {
+        stopAllAnimations();
+        
+        if (loadingText != null) {
+            loadingText.setText(message);
+        }
+        
+        // Solo animación de texto parpadeante, sin barra de progreso
+        textAnimation = new Timeline(
+            new KeyFrame(Duration.ZERO, new KeyValue(loadingText.opacityProperty(), 1.0)),
+            new KeyFrame(Duration.seconds(0.7), new KeyValue(loadingText.opacityProperty(), 0.5)),
+            new KeyFrame(Duration.seconds(1.4), new KeyValue(loadingText.opacityProperty(), 1.0))
+        );
+        textAnimation.setCycleCount(Timeline.INDEFINITE);
+        textAnimation.play();
+        
+        // Barra al 50% para indicar espera
+        loadingBar.setProgress(0.5);
+    }
+    
+    /**
+     * Establece el mensaje de carga sin iniciar animaciones
+     * @param message Mensaje a mostrar
+     */
     public void setLoadingMessage(String message) {
         if (loadingText != null) {
             loadingText.setText(message);
         }
     }
     
+    /**
+     * Completa la carga inmediatamente (para casos de carga rápida)
+     */
     public void completeLoading() {
-        if (loadingTimeline != null) {
-            loadingTimeline.stop();
-        }
+        stopAllAnimations();
         loadingBar.setProgress(1.0);
+        if (loadingText != null) {
+            loadingText.setOpacity(1.0);
+        }
     }
     
+    /**
+     * Detiene todas las animaciones y reinicia el estado
+     */
     public void stopLoading() {
+        stopAllAnimations();
+        loadingBar.setProgress(0);
+        if (loadingText != null) {
+            loadingText.setOpacity(1.0);
+        }
+    }
+    
+    /**
+     * Detiene todas las animaciones en curso
+     */
+    private void stopAllAnimations() {
         if (loadingTimeline != null) {
             loadingTimeline.stop();
+            loadingTimeline = null;
         }
+        if (textAnimation != null) {
+            textAnimation.stop();
+            textAnimation = null;
+        }
+        
+        // Asegurar que el texto sea visible al detener
+        if (loadingText != null) {
+            loadingText.setOpacity(1.0);
+        }
+    }
+    
+    /**
+     * Método para limpiar recursos cuando se cambia de vista
+     */
+    public void cleanup() {
+        stopAllAnimations();
     }
 }

@@ -251,10 +251,10 @@ public class Main extends Application {
                 case "challenge_declined":
                     String decliner = json.optString("from", "");
                     Platform.runLater(() -> {
+                        // ✅ VOLVER A OPPONENT SELECTION SI RECHAZAN
+                        UtilsViews.setViewAnimating("ViewOpponentSelection");
                         Main.showAlert("Invitación Rechazada", decliner + " rechazó tu invitación", AlertType.INFORMATION);
-                        // Limpiar estado de invitación pendiente
                         CtrlOpponentSelection.clearInvitation();
-                        // Actualizar lista
                         requestPlayersList();
                     });
                     break;
@@ -267,12 +267,33 @@ public class Main extends Application {
                         System.out.println("Iniciando partida - Rol: " + role + ", Oponente: " + opponent);
                         // Limpiar estado de invitación pendiente
                         CtrlOpponentSelection.clearInvitation();
-                        // Cambiar directamente a ViewGame
-                        UtilsViews.setViewAnimating("ViewGame");
-                        CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
-                        if (ctrlGame != null) {
-                            ctrlGame.setPlayerRole(role, opponent);
-                            ctrlGame.startGameSequence();
+                        
+                        // ✅ CORREGIDO: Primero ir a ViewLoading, luego a ViewGame
+                        UtilsViews.setViewAnimating("ViewLoading");
+                        
+                        // Configurar y iniciar la animación de carga
+                        CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
+                        if (ctrlLoading != null) {
+                            ctrlLoading.setLoadingMessage("CARGANDO PARTIDA...");
+                            ctrlLoading.startLoadingAnimation(() -> {
+                                // Cuando termina la animación, ir a ViewGame
+                                Platform.runLater(() -> {
+                                    UtilsViews.setViewAnimating("ViewGame");
+                                    CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
+                                    if (ctrlGame != null) {
+                                        ctrlGame.setPlayerRole(role, opponent);
+                                        ctrlGame.startGameSequence();
+                                    }
+                                });
+                            });
+                        } else {
+                            // Fallback si no hay ViewLoading
+                            UtilsViews.setViewAnimating("ViewGame");
+                            CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
+                            if (ctrlGame != null) {
+                                ctrlGame.setPlayerRole(role, opponent);
+                                ctrlGame.startGameSequence();
+                            }
                         }
                     });
                     break;

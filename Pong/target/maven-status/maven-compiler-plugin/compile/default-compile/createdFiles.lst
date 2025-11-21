@@ -3,7 +3,6 @@ com/client/CtrlOpponentSelection$1.class
 com/client/Main.class
 com/client/CtrlOpponentSelection.class
 com/client/CtrlLoading.class
-com/client/CountdCtrl.class
 com/client/UtilsWS$1.class
 com/client/UtilsWS.class
 com/client/UtilsViews.class

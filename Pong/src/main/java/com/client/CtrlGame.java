@@ -275,10 +275,12 @@ public class CtrlGame implements Initializable {
         gameContainer.setFocusTraversable(true);
         gameContainer.requestFocus(); 
         
-        // Añade un listener para cuando se gana/recupera el focus
+        // Asegurar que recupera el focus
         gameContainer.focusedProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal) {
-                System.out.println("Game container con focus");
+                System.out.println("✅ Game container con focus - Teclado activo");
+            } else {
+                System.out.println("⚠️ Game container perdió focus");
             }
         });
         
@@ -330,6 +332,8 @@ public class CtrlGame implements Initializable {
     private void sendMoveToServer(double delta) {
         try {
             System.out.println("PREPARANDO ENVÍO DE MOVIMIENTO...");
+            System.out.println("   Delta: " + delta);
+            System.out.println("   UpPressed: " + upPressed + " | DownPressed: " + downPressed);
             
             //Calcular nueva posición basada en la posición ACTUAL
             double currentY;
@@ -367,7 +371,7 @@ public class CtrlGame implements Initializable {
             }
             
         } catch (Exception e) {
-            System.err.println("ERROR CRÍTICO en sendMoveToServer: " + e.getMessage());
+            System.err.println("ERROR CRÍTICO en movimiento: " + e.getMessage());
             e.printStackTrace();
         }
     }

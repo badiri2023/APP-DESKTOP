@@ -12,6 +12,7 @@ import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
@@ -84,9 +85,6 @@ public class CtrlGame implements Initializable {
             if (retroFont == null) {
                 retroFont = Font.font("Consolas", 14);
             }
-
-            setupControls();
-            setupContinuousMovement();
             
             // Aplicar estilos
             applyStyles();
@@ -96,6 +94,11 @@ public class CtrlGame implements Initializable {
             
             // Configurar controles
             setupControls();
+            
+            Platform.runLater(() -> {
+                gameContainer.requestFocus();
+                System.out.println("✅ Focus forzado en gameContainer");
+            });
             
             // Iniciar game loop (solo renderizado)
             startGameLoop();
@@ -221,6 +224,11 @@ public class CtrlGame implements Initializable {
             currentPhase = GamePhase.PLAYING;
             countdownValue = "";
             System.out.println("¡JUEGO INICIADO!");
+            
+            Platform.runLater(() -> {
+                gameContainer.requestFocus();
+                System.out.println("JUEGO ACTIVO - Focus forzado en gameContainer");
+            });
         } else {
             countdownActive = true;
             countdownValue = value;
@@ -273,32 +281,50 @@ public class CtrlGame implements Initializable {
     
     private void setupControls() {
         gameContainer.setFocusTraversable(true);
-        gameContainer.requestFocus(); 
         
-        // Asegurar que recupera el focus
         gameContainer.focusedProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal) {
-                System.out.println("✅ Game container con focus - Teclado activo");
+                System.out.println("Game container OBTUVO el focus - Teclado ACTIVO");
             } else {
-                System.out.println("⚠️ Game container perdió focus");
+                System.out.println("Game container PERDIÓ el focus");
+                // Intentar recuperar el focus automáticamente
+                Platform.runLater(() -> {
+                    gameContainer.requestFocus();
+                    System.out.println("Intentando recuperar focus...");
+                });
             }
         });
         
         gameContainer.setOnKeyPressed(this::handleKeyPress);
         gameContainer.setOnKeyReleased(this::handleKeyRelease);
+        
+        gameCanvas.setOnMouseClicked(e -> {
+            gameContainer.requestFocus();
+            System.out.println("🖱️ Canvas clickeado - Focus solicitado");
+        });
+        
+        // Solicitar focus inicial
+        gameContainer.requestFocus();
+        System.out.println("Controles configurados - Focus solicitado");
     }
 
-    private void handleKeyPress(KeyEvent event) {
-        System.out.println("=== 🎮 TECLA PRESIONADA ===");
+    private void debugKeyEvent(KeyEvent event, String action) {
+        System.out.println("=== TECLA " + action + " ===");
         System.out.println("Tecla: " + event.getCode());
         System.out.println("GameActive: " + gameActive);
         System.out.println("Phase: " + currentPhase);
         System.out.println("Role: " + playerRole);
+        System.out.println("Container focused: " + gameContainer.isFocused());
+        System.out.println("Canvas focused: " + gameCanvas.isFocused());
         System.out.println("===========================");
+    }
+
+    private void handleKeyPress(KeyEvent event) {
+        debugKeyEvent(event, "PRESIONADA");
         
         // Solo procesar movimientos si el juego está activo
         if (!gameActive || GamePhase.PLAYING != currentPhase) {
-            System.out.println("Movimiento ignorado - Juego no activo o fase incorrecta");
+            System.out.println("❌ Movimiento ignorado - Juego no activo o fase incorrecta");
             return;
         }
         
@@ -317,8 +343,6 @@ public class CtrlGame implements Initializable {
         
         if (moved) {
             sendMoveToServer(moveDelta);
-        } else {
-            System.out.println("Tecla no reconocida para movimiento");
         }
         
         event.consume();
@@ -389,19 +413,7 @@ public class CtrlGame implements Initializable {
     }
     
     private void handleKeyRelease(KeyEvent event) {
-        if (event.getCode() == KeyCode.UP) {
-            upPressed = false;
-            System.out.println("↑ Flecha ARRIBA liberada");
-        } else if (event.getCode() == KeyCode.DOWN) {
-            downPressed = false;
-            System.out.println("↓ Flecha ABAJO liberada");
-        }
-        
-        // Detener movimiento si no hay teclas presionadas
-        if (!upPressed && !downPressed) {
-            stopContinuousMovement();
-        }
-        
+        debugKeyEvent(event, "LIBERADA");
         event.consume();
     }
 

@@ -152,4 +152,19 @@ public class UtilsWS {
     public boolean isOpen() {
         return client != null && client.isOpen();
     }
+
+    public boolean waitForConnection(int timeoutSeconds) {
+        if (isOpen()) return true;
+        
+        for (int i = 0; i < timeoutSeconds * 2; i++) {
+            try {
+                Thread.sleep(500);
+                if (isOpen()) return true;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return false;
+    }
 }

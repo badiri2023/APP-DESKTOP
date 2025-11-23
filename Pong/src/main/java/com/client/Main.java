@@ -370,7 +370,27 @@ public class Main extends Application {
                         }
                     });
                     break;
+                case "player_disconnected":
+                    String disconnectedPlayer = json.optString("disconnected_player", "");
+                    String disconnectMessage = json.optString("message", "");
                     
+                    Platform.runLater(() -> {
+                        System.out.println("🔌 Jugador desconectado: " + disconnectedPlayer);
+                        
+                        // Mostrar alerta informativa
+                        Main.showAlert("Jugador Desconectado", 
+                            disconnectedPlayer + " se ha desconectado. Volviendo al lobby...", 
+                            AlertType.INFORMATION, 3000);
+                        
+                        // Volver a la pantalla de selección de oponente
+                        UtilsViews.setViewAnimating("ViewOpponentSelection");
+                        
+                        // Actualizar lista de jugadores
+                        if (ctrlOpponentSelection != null) {
+                            requestPlayersList();
+                        }
+                    });
+                    break;
                 default:
                     System.out.println("Mensaje no manejado - Tipo: " + type);
             }

@@ -7,8 +7,11 @@ import org.json.JSONObject;
 
 import com.client.enums.GamePhase;
 
+import javafx.animation.Animation;
 import javafx.animation.AnimationTimer;
+import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
@@ -59,6 +62,12 @@ public class CtrlGame implements Initializable {
     private final double BALL_SIZE = 15;
     private final double FIELD_WIDTH = 800;
     private final double FIELD_HEIGHT = 500;
+
+    private boolean upPressed = false;
+    private boolean downPressed = false;
+    private final double MOVE_SPEED = 0.03; 
+    
+    private Timeline movementTimeline;
     
     private AnimationTimer gameLoop;
 
@@ -75,6 +84,9 @@ public class CtrlGame implements Initializable {
             if (retroFont == null) {
                 retroFont = Font.font("Consolas", 14);
             }
+
+            setupControls();
+            setupContinuousMovement();
             
             // Aplicar estilos
             applyStyles();
@@ -91,6 +103,31 @@ public class CtrlGame implements Initializable {
         } catch (Exception e) {
             System.err.println("Error en CtrlGame: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private void setupContinuousMovement() {
+        movementTimeline = new Timeline(
+            new KeyFrame(Duration.millis(16), e -> handleContinuousMovement())
+        );
+        movementTimeline.setCycleCount(Timeline.INDEFINITE);
+    }
+
+    private void handleContinuousMovement() {
+        if (!gameActive || GamePhase.PLAYING != currentPhase) {
+            return;
+        }
+        
+        double moveDelta = 0;
+        
+        if (upPressed && !downPressed) {
+            moveDelta = -MOVE_SPEED;
+        } else if (downPressed && !upPressed) {
+            moveDelta = MOVE_SPEED;
+        }
+        
+        if (moveDelta != 0) {
+            sendMoveToServer(moveDelta);
         }
     }
     
@@ -161,23 +198,20 @@ public class CtrlGame implements Initializable {
     }
 
     public void updateGameState(double p1Y, double p2Y, double ballX, double ballY, int score1, int score2) {
-        System.out.println("Actualizando estado - P1Y: " + p1Y + " P2Y: " + p2Y + 
-                        " Ball: " + ballX + "," + ballY + " Score: " + score1 + "-" + score2);
+        // Suavizado de movimiento para reducir latencia visual
+        double smoothing = 0.7;
         
-        if (GamePhase.PLAYING == currentPhase) {
-            // ✅ CORREGIDO: Convertir coordenadas normalizadas a píxeles
-            this.player1Y = p1Y * (FIELD_HEIGHT - PADDLE_HEIGHT);
-            this.player2Y = p2Y * (FIELD_HEIGHT - PADDLE_HEIGHT);
-            this.ballX = ballX * (FIELD_WIDTH - BALL_SIZE);
-            this.ballY = ballY * (FIELD_HEIGHT - BALL_SIZE);
-            this.player1Score = score1;
-            this.player2Score = score2;
-            
-            updateScoreDisplay();
-            
-            // ✅ NUEVO: Debug para verificar que se actualizan las posiciones
-            System.out.println("Posiciones actualizadas - P1Y_px: " + this.player1Y + " P2Y_px: " + this.player2Y);
-        }
+        this.player1Y = smoothing * this.player1Y + (1 - smoothing) * (p1Y * (FIELD_HEIGHT - PADDLE_HEIGHT));
+        this.player2Y = smoothing * this.player2Y + (1 - smoothing) * (p2Y * (FIELD_HEIGHT - PADDLE_HEIGHT));
+        
+        // Para la pelota, menos suavizado para mayor responsividad
+        this.ballX = ballX * (FIELD_WIDTH - BALL_SIZE);
+        this.ballY = ballY * (FIELD_HEIGHT - BALL_SIZE);
+        
+        this.player1Score = score1;
+        this.player2Score = score2;
+        
+        updateScoreDisplay();
     }
     
     public void handleCountdown(String value) {
@@ -264,26 +298,33 @@ public class CtrlGame implements Initializable {
             return;
         }
         
-        double moveDelta = 0;
-        boolean moved = false;
-        
+        // ✅ CAMBIADO: Activar movimiento continuo en lugar de enviar una vez
         if (event.getCode() == KeyCode.UP) {
-            moveDelta = -0.05; 
-            moved = true;
-            System.out.println("Moviendo hacia ARRIBA - Delta: " + moveDelta);
+            upPressed = true;
+            System.out.println("↑ Flecha ARRIBA presionada - Movimiento continuo activado");
+            startContinuousMovement();
         } else if (event.getCode() == KeyCode.DOWN) {
-            moveDelta = 0.05; 
-            moved = true;
-            System.out.println("Moviendo hacia ABAJO - Delta: " + moveDelta);
-        }
-        
-        if (moved) {
-            sendMoveToServer(moveDelta);
-        } else {
-            System.out.println("Tecla no reconocida para movimiento");
+            downPressed = true;
+            System.out.println("↓ Flecha ABAJO presionada - Movimiento continuo activado");
+            startContinuousMovement();
         }
         
         event.consume();
+    }
+
+    private void startContinuousMovement() {
+        if (movementTimeline != null && movementTimeline.getStatus() != Animation.Status.RUNNING) {
+            movementTimeline.play();
+            System.out.println("🎮 Movimiento continuo INICIADO");
+        }
+    }
+    
+    // ✅ NUEVO: Detener movimiento continuo
+    private void stopContinuousMovement() {
+        if (movementTimeline != null) {
+            movementTimeline.stop();
+            System.out.println("🎮 Movimiento continuo DETENIDO");
+        }
     }
 
     private void sendMoveToServer(double delta) {
@@ -332,7 +373,31 @@ public class CtrlGame implements Initializable {
     }
     
     private void handleKeyRelease(KeyEvent event) {
-        // Para movimiento suave si se implementa
+        if (event.getCode() == KeyCode.UP) {
+            upPressed = false;
+            System.out.println("↑ Flecha ARRIBA liberada");
+        } else if (event.getCode() == KeyCode.DOWN) {
+            downPressed = false;
+            System.out.println("↓ Flecha ABAJO liberada");
+        }
+        
+        // Detener movimiento si no hay teclas presionadas
+        if (!upPressed && !downPressed) {
+            stopContinuousMovement();
+        }
+        
+        event.consume();
+    }
+
+    public void verifyGameState() {
+        if (currentPhase == GamePhase.PLAYING && !gameActive) {
+            System.err.println("⚠️ Estado inconsistente - Corrigiendo...");
+            gameActive = true;
+        }
+        
+        // Verificar que las coordenadas estén en rango
+        player1Y = Math.max(0, Math.min(FIELD_HEIGHT - PADDLE_HEIGHT, player1Y));
+        player2Y = Math.max(0, Math.min(FIELD_HEIGHT - PADDLE_HEIGHT, player2Y));
     }
     
     private void startGameLoop() {
@@ -457,5 +522,8 @@ public class CtrlGame implements Initializable {
         if (gameLoop != null) {
             gameLoop.stop();
         }
+        stopContinuousMovement(); 
+        upPressed = false;
+        downPressed = false;
     }
 }

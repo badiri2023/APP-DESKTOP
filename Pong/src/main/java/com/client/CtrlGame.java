@@ -289,10 +289,12 @@ public class CtrlGame implements Initializable {
     }
 
     private void handleKeyPress(KeyEvent event) {
-        System.out.println("TECLA PRESIONADA: " + event.getCode() + 
-                        " | GameActive: " + gameActive + 
-                        " | Phase: " + currentPhase +
-                        " | Role: " + playerRole);
+        System.out.println("=== 🎮 TECLA PRESIONADA ===");
+        System.out.println("Tecla: " + event.getCode());
+        System.out.println("GameActive: " + gameActive);
+        System.out.println("Phase: " + currentPhase);
+        System.out.println("Role: " + playerRole);
+        System.out.println("===========================");
         
         // Solo procesar movimientos si el juego está activo
         if (!gameActive || GamePhase.PLAYING != currentPhase) {
@@ -300,15 +302,23 @@ public class CtrlGame implements Initializable {
             return;
         }
         
-        // ✅ CAMBIADO: Activar movimiento continuo en lugar de enviar una vez
+        double moveDelta = 0;
+        boolean moved = false;
+        
         if (event.getCode() == KeyCode.UP) {
-            upPressed = true;
-            System.out.println("↑ Flecha ARRIBA presionada - Movimiento continuo activado");
-            startContinuousMovement();
+            moveDelta = -0.08;
+            moved = true;
+            System.out.println("↑ Moviendo hacia ARRIBA");
         } else if (event.getCode() == KeyCode.DOWN) {
-            downPressed = true;
-            System.out.println("↓ Flecha ABAJO presionada - Movimiento continuo activado");
-            startContinuousMovement();
+            moveDelta = 0.08;
+            moved = true;
+            System.out.println("↓ Moviendo hacia ABAJO");
+        }
+        
+        if (moved) {
+            sendMoveToServer(moveDelta);
+        } else {
+            System.out.println("Tecla no reconocida para movimiento");
         }
         
         event.consume();
@@ -331,36 +341,36 @@ public class CtrlGame implements Initializable {
 
     private void sendMoveToServer(double delta) {
         try {
-            System.out.println("PREPARANDO ENVÍO DE MOVIMIENTO...");
-            System.out.println("   Delta: " + delta);
-            System.out.println("   UpPressed: " + upPressed + " | DownPressed: " + downPressed);
+            System.out.println("=== ENVIANDO MOVIMIENTO ===");
             
-            //Calcular nueva posición basada en la posición ACTUAL
+            // Obtener posición actual NORMALIZADA (0-1)
             double currentY;
             if ("p1".equals(playerRole)) {
                 currentY = player1Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
-                System.out.println("Jugador P1 - CurrentY: " + currentY);
+                System.out.println("Jugador: P1 (Izquierda)");
             } else {
                 currentY = player2Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
-                System.out.println("Jugador P2 - CurrentY: " + currentY);
+                System.out.println("Jugador: P2 (Derecha)");
             }
             
             double newY = Math.max(0, Math.min(1, currentY + delta));
-            System.out.println("Nueva posición calculada: " + newY + " (Delta: " + delta + ")");
+            System.out.println("Posición actual: " + String.format("%.3f", currentY));
+            System.out.println("Delta: " + String.format("%.3f", delta));
+            System.out.println("Nueva posición: " + String.format("%.3f", newY));
             
             JSONObject moveMsg = new JSONObject();
             moveMsg.put("type", "move");
             moveMsg.put("y_pos", newY);
             
             String message = moveMsg.toString();
-            System.out.println("MENSAJE JSON A ENVIAR: " + message);
+            System.out.println("Mensaje JSON: " + message);
             
             if (Main.wsClient != null) {
                 System.out.println("WebSocket estado: " + (Main.wsClient.isOpen() ? "CONECTADO" : "DESCONECTADO"));
                 Main.wsClient.safeSend(message);
                 System.out.println("Mensaje enviado al servidor");
                 
-                //Actualizar visualmente la posición localmente también
+                // Actualizar visualmente localmente también
                 if ("p1".equals(playerRole)) {
                     player1Y = newY * (FIELD_HEIGHT - PADDLE_HEIGHT);
                 } else {
@@ -370,8 +380,10 @@ public class CtrlGame implements Initializable {
                 System.out.println("ERROR: WebSocket client es NULL");
             }
             
+            System.out.println("=== FIN ENVÍO ===");
+            
         } catch (Exception e) {
-            System.err.println("ERROR CRÍTICO en movimiento: " + e.getMessage());
+            System.err.println("ERROR CRÍTICO en sendMoveToServer: " + e.getMessage());
             e.printStackTrace();
         }
     }

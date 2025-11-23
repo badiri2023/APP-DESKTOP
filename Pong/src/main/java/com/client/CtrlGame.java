@@ -65,11 +65,12 @@ public class CtrlGame implements Initializable {
     
     private AnimationTimer gameLoop;
 
-    // ✅ NUEVO: Variables para movimiento fluido
+    // ✅ CORREGIDO: Variables para movimiento fluido con velocidad reducida
     private boolean upPressed = false;
     private boolean downPressed = false;
-    private final double MOVE_SPEED = 0.015; // Velocidad suave
+    private final double MOVE_SPEED = 0.008; // ✅ REDUCIDO: Velocidad más suave
     private Timeline movementTimeline;
+    private long lastMoveTime = 0; // ✅ NUEVO: Control de tiempo entre movimientos
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -281,18 +282,24 @@ public class CtrlGame implements Initializable {
         System.out.println("🎮 Controles configurados - Focus solicitado");
     }
 
-    // ✅ NUEVO: Configurar movimiento continuo
+    // ✅ CORREGIDO: Configurar movimiento continuo con intervalo controlado
     private void setupContinuousMovement() {
         movementTimeline = new Timeline(
-            new KeyFrame(Duration.millis(16), e -> handleContinuousMovement()) // ~60 FPS
+            new KeyFrame(Duration.millis(50), e -> handleContinuousMovement()) // ✅ REDUCIDO: 20 FPS en lugar de 60
         );
         movementTimeline.setCycleCount(Timeline.INDEFINITE);
-        System.out.println("🎮 Movimiento fluido configurado");
+        System.out.println("🎮 Movimiento fluido configurado (20 FPS)");
     }
     
-    // ✅ NUEVO: Manejar movimiento continuo
+    // ✅ CORREGIDO: Manejar movimiento continuo con límites
     private void handleContinuousMovement() {
         if (!gameActive || GamePhase.PLAYING != currentPhase) {
+            return;
+        }
+        
+        // ✅ NUEVO: Control de tiempo para evitar movimientos demasiado rápidos
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastMoveTime < 40) { // ✅ Máximo ~25 movimientos por segundo
             return;
         }
         
@@ -307,6 +314,7 @@ public class CtrlGame implements Initializable {
             
             if (moveDelta != 0) {
                 sendMoveToServer(moveDelta);
+                lastMoveTime = currentTime; // ✅ Actualizar tiempo del último movimiento
             }
         }
     }
@@ -335,7 +343,6 @@ public class CtrlGame implements Initializable {
         System.out.println("Phase: " + currentPhase);
         System.out.println("Role: " + playerRole);
         System.out.println("Container focused: " + gameContainer.isFocused());
-        System.out.println("Canvas focused: " + gameCanvas.isFocused());
         System.out.println("===========================");
     }
 
@@ -381,6 +388,7 @@ public class CtrlGame implements Initializable {
         event.consume();
     }
 
+    // ✅ CORREGIDO: sendMoveToServer con mejor control
     private void sendMoveToServer(double delta) {
         try {
             // Obtener posición actual NORMALIZADA (0-1)
@@ -391,10 +399,10 @@ public class CtrlGame implements Initializable {
                 currentY = player2Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
             }
             
-            double newY = Math.max(0, Math.min(1, currentY + delta));
+            double newY = Math.max(0.05, Math.min(0.95, currentY + delta)); // ✅ LÍMITES: Evitar bordes
             
             // ✅ OPTIMIZADO: Solo enviar si hay cambio significativo
-            if (Math.abs(newY - currentY) > 0.001) {
+            if (Math.abs(newY - currentY) > 0.005) {
                 JSONObject moveMsg = new JSONObject();
                 moveMsg.put("type", "move");
                 moveMsg.put("y_pos", newY);
@@ -410,7 +418,7 @@ public class CtrlGame implements Initializable {
                     }
                     
                     // Debug ocasional para no saturar
-                    if (System.currentTimeMillis() % 500 < 16) { // ~cada 500ms
+                    if (System.currentTimeMillis() % 1000 < 50) { // ~cada 1 segundo
                         System.out.println("🔄 Movimiento fluido - Nueva Y: " + String.format("%.3f", newY));
                     }
                 }

@@ -97,7 +97,7 @@ public class CtrlGame implements Initializable {
             
             Platform.runLater(() -> {
                 gameContainer.requestFocus();
-                System.out.println("✅ Focus forzado en gameContainer");
+                System.out.println("Focus forzado en gameContainer");
             });
             
             // Iniciar game loop (solo renderizado)
@@ -202,7 +202,7 @@ public class CtrlGame implements Initializable {
 
     public void updateGameState(double p1Y, double p2Y, double ballX, double ballY, int score1, int score2) {
         // Suavizado de movimiento para reducir latencia visual
-        double smoothing = 0.7;
+        double smoothing = 0.9;
         
         this.player1Y = smoothing * this.player1Y + (1 - smoothing) * (p1Y * (FIELD_HEIGHT - PADDLE_HEIGHT));
         this.player2Y = smoothing * this.player2Y + (1 - smoothing) * (p2Y * (FIELD_HEIGHT - PADDLE_HEIGHT));

@@ -49,9 +49,9 @@ public class Main extends Application {
             try {
                 UtilsViews.addView(getClass(), "ViewLogin", "/assets/viewLogin.fxml");
                 ctrlLogin = (CtrlLogin) UtilsViews.getController("ViewLogin");
-                System.out.println("✅ Vista Login cargada correctamente");
+                System.out.println("Vista Login cargada correctamente");
             } catch (Exception e) {
-                System.err.println("❌ Error cargando ViewLogin: " + e.getMessage());
+                System.err.println("Error cargando ViewLogin: " + e.getMessage());
                 showErrorAndExit("No se pudo cargar la vista de login");
                 return;
             }
@@ -59,31 +59,31 @@ public class Main extends Application {
             try {
                 UtilsViews.addView(getClass(), "ViewOpponentSelection", "/assets/viewOpponentSelection.fxml");
                 ctrlOpponentSelection = (CtrlOpponentSelection) UtilsViews.getController("ViewOpponentSelection");
-                System.out.println("✅ Vista OpponentSelection cargada correctamente");
+                System.out.println("Vista OpponentSelection cargada correctamente");
             } catch (Exception e) {
-                System.err.println("❌ Error cargando ViewOpponentSelection: " + e.getMessage());
+                System.err.println("Error cargando ViewOpponentSelection: " + e.getMessage());
                 System.err.println("La funcionalidad de selección de oponente no estará disponible");
             }
 
             try {
                 UtilsViews.addView(getClass(), "ViewLoading", "/assets/viewLoading.fxml");
-                System.out.println("✅ Vista Loading cargada correctamente");
+                System.out.println("Vista Loading cargada correctamente");
             } catch (Exception e) {
-                System.err.println("❌ Error cargando ViewLoading: " + e.getMessage());
+                System.err.println("Error cargando ViewLoading: " + e.getMessage());
             }
 
             try {
                 UtilsViews.addView(getClass(), "ViewGame", "/assets/viewGame.fxml");
-                System.out.println("✅ Vista Game cargada correctamente");
+                System.out.println("Vista Game cargada correctamente");
             } catch (Exception e) {
-                System.err.println("❌ Error cargando ViewGame: " + e.getMessage());
+                System.err.println("Error cargando ViewGame: " + e.getMessage());
             }
 
             try {
                 UtilsViews.addView(getClass(), "ViewGameOver", "/assets/viewGameOver.fxml");
-                System.out.println("✅ Vista GameOver cargada correctamente");
+                System.out.println("Vista GameOver cargada correctamente");
             } catch (Exception e) {
-                System.err.println("❌ Error cargando ViewGameOver: " + e.getMessage());
+                System.err.println("Error cargando ViewGameOver: " + e.getMessage());
             }
 
             Scene scene = new Scene(UtilsViews.parentContainer, windowWidth, windowHeight);
@@ -148,7 +148,7 @@ public class Main extends Application {
             // Esperar a que la conexión se establezca
             pauseDuring(2000, () -> {
                 if (wsClient != null && wsClient.isOpen()) {
-                    // ✅ CORREGIDO: Enviar NICKNAME: en lugar de JSON
+                    // CORREGIDO: Enviar NICKNAME: en lugar de JSON
                     String nicknameMessage = "NICKNAME:" + ctrlLogin.getUserName().trim();
                     wsClient.safeSend(nicknameMessage);
                     System.out.println("Enviando nombre de usuario (NICKNAME): " + ctrlLogin.getUserName().trim());
@@ -251,7 +251,7 @@ public class Main extends Application {
                 case "challenge_declined":
                     String decliner = json.optString("from", "");
                     Platform.runLater(() -> {
-                        // ✅ VOLVER A OPPONENT SELECTION SI RECHAZAN
+                        // VOLVER A OPPONENT SELECTION SI RECHAZAN
                         UtilsViews.setViewAnimating("ViewOpponentSelection");
                         Main.showAlert("Invitación Rechazada", decliner + " rechazó tu invitación", AlertType.INFORMATION);
                         CtrlOpponentSelection.clearInvitation();

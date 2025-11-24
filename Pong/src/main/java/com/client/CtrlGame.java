@@ -148,19 +148,19 @@ public class CtrlGame implements Initializable {
     }
     
     // NUEVO MÉTODO: Mostrar anuncio de quién inicia
-    public void showStarterAnnouncement(String message, long duration) {
-        currentPhase = GamePhase.ANNOUNCING;
-        countdownValue = message;
-        countdownActive = true;
+    // public void showStarterAnnouncement(String message, long duration) {
+    //     currentPhase = GamePhase.ANNOUNCING;
+    //     countdownValue = message;
+    //     countdownActive = true;
         
-        // Configurar timer para ocultar el anuncio
-        PauseTransition pause = new PauseTransition(Duration.millis(duration));
-        pause.setOnFinished(e -> {
-            countdownActive = false;
-            // La cuenta regresiva comenzará automáticamente desde el servidor
-        });
-        pause.play();
-    }
+    //     // Configurar timer para ocultar el anuncio
+    //     PauseTransition pause = new PauseTransition(Duration.millis(duration));
+    //     pause.setOnFinished(e -> {
+    //         countdownActive = false;
+    //         // La cuenta regresiva comenzará automáticamente desde el servidor
+    //     });
+    //     pause.play();
+    // }
     
     public void setPlayerRole(String role, String opponent) {
         this.playerRole = role;

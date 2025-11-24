@@ -9,6 +9,7 @@ com/client/UtilsWS$1.class
 com/client/UtilsWS.class
 com/client/UtilsViews.class
 com/client/enums/GamePhase.class
+com/client/Main$GameInfo.class
 com/client/CtrlGameOver.class
 com/client/CtrlGame.class
 com/shared/ClientData.class

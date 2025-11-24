@@ -16,7 +16,6 @@ public class CtrlGameOver implements Initializable {
 
     @FXML private Label gameOverLabel;
     @FXML private Label winnerLabel;
-    @FXML private Label resultLabel;
     
     @FXML private Label finalScore1;
     @FXML private Label finalScore2;
@@ -44,7 +43,7 @@ public class CtrlGameOver implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         try {
             // Cargar fuente
-            retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/8bitOperatorPlus8-Regular.ttf"), 14);
+            retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/BrunoAce-Regular.ttf"), 14);
             if (retroFont == null) {
                 retroFont = Font.font("Consolas", 14);
             }
@@ -65,16 +64,10 @@ public class CtrlGameOver implements Initializable {
             gameOverLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 10, 0, 0, 0);");
         }
         
-        // Estilo del label del resultado
-        if (resultLabel != null) {
-            resultLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 24));
-            resultLabel.setTextFill(Color.WHITE);
-        }
-        
-        // Estilo del label del ganador
+        // Estilo del label del ganador (ahora más grande para compensar la falta de resultLabel)
         if (winnerLabel != null) {
-            winnerLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 36));
-            winnerLabel.setTextFill(Color.GOLD); // Color inicial dorado
+            winnerLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 42)); // Aumentado de 36 a 42
+            winnerLabel.setTextFill(Color.GOLD);
         }
         
         // Estilo de las puntuaciones
@@ -152,7 +145,7 @@ public class CtrlGameOver implements Initializable {
         }
     }
     
-    // MODIFICADO: Método para establecer el ganador
+    // Método para establecer el ganador
     public void setWinner(String winnerName, int score1, int score2) {
         this.winnerName = winnerName;
         this.player1Score = score1;
@@ -226,9 +219,9 @@ public class CtrlGameOver implements Initializable {
         }
     }
     
-    // MODIFICADO: Actualizar toda la interfaz de usuario
+    // MODIFICADO: Actualizar toda la interfaz de usuario (sin resultLabel)
     private void updateUI() {
-        System.out.println("Actualizando UI de GameOver...");
+        System.out.println(" Actualizando UI de GameOver...");
         
         // Actualizar labels de jugadores
         if (player1Label != null) {
@@ -240,8 +233,8 @@ public class CtrlGameOver implements Initializable {
             System.out.println("player2Label: " + player2Name);
         }
         
-        // CORREGIDO: Configurar labels de resultado
-        configureResultLabels();
+        // CORREGIDO: Configurar winnerLabel sin resultLabel
+        configureWinnerLabel();
         
         // Actualizar puntuaciones
         if (finalScore1 != null) {
@@ -253,30 +246,27 @@ public class CtrlGameOver implements Initializable {
             System.out.println("finalScore2: " + player2Score);
         }
         
-        // CORREGIDO: Aplicar colores a AMBAS playerLabels
+        // Aplicar colores a AMBAS playerLabels
         applyWinnerColors();
         
         System.out.println("UI de GameOver actualizada correctamente");
     }
     
-    // CORREGIDO: Configurar labels de resultado con nombres
-    private void configureResultLabels() {
-        if (resultLabel != null && winnerLabel != null) {
-            // resultLabel muestra el nombre del GANADOR
-            resultLabel.setText(winnerName);
-            
-            // winnerLabel muestra "WINNER" o "LOSER" según el jugador actual
+    // NUEVO: Configurar winnerLabel para mostrar información completa
+    private void configureWinnerLabel() {
+        if (winnerLabel != null) {
+            // winnerLabel ahora muestra: "GANADOR: [Nombre]" o "PERDEDOR: [TuNombre]"
             if (isCurrentPlayerWinner) {
-                winnerLabel.setText("WINNER");
-                System.out.println("Jugador actual es WINNER: " + Main.ctrlLogin.getUserName());
+                winnerLabel.setText("GANADOR: " + Main.ctrlLogin.getUserName());
+                System.out.println("Configurado como GANADOR: " + Main.ctrlLogin.getUserName());
             } else {
-                winnerLabel.setText("LOSER");
-                System.out.println("Jugador actual es LOSER: " + Main.ctrlLogin.getUserName());
+                winnerLabel.setText("PERDEDOR: " + Main.ctrlLogin.getUserName());
+                System.out.println("Configurado como PERDEDOR: " + Main.ctrlLogin.getUserName());
             }
         }
     }
     
-    // CORREGIDO: Aplicar colores verde/rojo a AMBAS playerLabels
+    // MODIFICADO: Aplicar colores verde/rojo a AMBAS playerLabels
     private void applyWinnerColors() {
         if (player1Label != null && player2Label != null && gameOverLabel != null && winnerLabel != null) {
             
@@ -284,13 +274,13 @@ public class CtrlGameOver implements Initializable {
             player1Label.setStyle("-fx-text-fill: #ffffff;");
             player2Label.setStyle("-fx-text-fill: #ffffff;");
             
-            // CORREGIDO: Determinar qué jugador es el ganador
+            // Determinar qué jugador es el ganador
             boolean player1IsWinner = player1Name.equals(winnerName);
             boolean player2IsWinner = player2Name.equals(winnerName);
             
             System.out.println("Aplicando colores - P1 es ganador: " + player1IsWinner + ", P2 es ganador: " + player2IsWinner);
             
-            // CORREGIDO: Aplicar colores a AMBAS playerLabels
+            // Aplicar colores a AMBAS playerLabels
             if (player1IsWinner) {
                 // Player 1 GANADOR (VERDE), Player 2 PERDEDOR (ROJO)
                 player1Label.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 3, 0, 0, 0);");
@@ -303,19 +293,17 @@ public class CtrlGameOver implements Initializable {
                 System.out.println("Player2 VERDE (ganador), Player1 ROJO (perdedor)");
             }
             
-            // CORREGIDO: GameOverLabel y winnerLabel según el jugador actual
+            // GameOverLabel y winnerLabel según el jugador actual
             if (isCurrentPlayerWinner) {
                 // JUGADOR ACTUAL GANÓ - VERDE
                 gameOverLabel.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 10, 0, 0, 0);");
                 winnerLabel.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 5, 0, 0, 0);");
-                resultLabel.setStyle("-fx-text-fill: #00ff00;");
                 System.out.println("Color VERDE aplicado a GameOver - JUGADOR GANADOR");
             } else {
                 // JUGADOR ACTUAL PERDIÓ - ROJO
                 gameOverLabel.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 10, 0, 0, 0);");
                 winnerLabel.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 5, 0, 0, 0);");
-                resultLabel.setStyle("-fx-text-fill: #ff0000;");
-                System.out.println("Color ROJO aplicado a GameOver - JUGADOR PERDEDOR");
+                System.out.println(" Color ROJO aplicado a GameOver - JUGADOR PERDEDOR");
             }
         }
     }

@@ -24,11 +24,6 @@
          
          <!-- Ganador -->
          <VBox alignment="CENTER" prefWidth="600.0" spacing="20.0" style="-fx-background-color: #1a1a1a; -fx-border-color: #ffffff; -fx-border-width: 2; -fx-padding: 30;">
-            <Label fx:id="resultLabel" style="-fx-text-fill: #ffffff;" text="GANADOR">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="24.0" />
-               </font>
-            </Label>
             <Label fx:id="winnerLabel" style="-fx-text-fill: #ffcc00;" text="PLAYER">
                <font>
                   <Font name="8bitOperatorPlus8-Regular" size="36.0" />

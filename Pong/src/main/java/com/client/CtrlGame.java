@@ -81,7 +81,7 @@ public class CtrlGame implements Initializable {
             gc = gameCanvas.getGraphicsContext2D();
             
             // Cargar fuente
-            retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/8bitOperatorPlus8-Regular.ttf"), 14);
+            retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/BrunoAce-Regular.ttf"), 14);
             if (retroFont == null) {
                 retroFont = Font.font("Consolas", 14);
             }

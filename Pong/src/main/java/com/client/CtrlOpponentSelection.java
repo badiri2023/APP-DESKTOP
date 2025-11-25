@@ -55,7 +55,7 @@ public class CtrlOpponentSelection implements Initializable {
         try {
             // Cargar fuente retro
             try {
-                retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/8bitOperatorPlus8-Regular.ttf"), 14);
+                retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/BrunoAce-Regular.ttf"), 14);
                 System.out.println("Fuente cargada en OpponentSelection: " + retroFont.getFamily());
             } catch (Exception e) {
                 System.out.println("No se pudo cargar fuente 8bitOperatorPlus8: " + e.getMessage());
@@ -272,7 +272,7 @@ public class CtrlOpponentSelection implements Initializable {
                         invitationPending = false;
                         pendingOpponent = "";
 
-                        Main.showAlert("Tiempo Agotado", 
+                        AlertManager.showAlert("Tiempo Agotado", 
                                     "La invitación a " + opponentName + " ha expirado.", 
                                     AlertType.WARNING);
                         

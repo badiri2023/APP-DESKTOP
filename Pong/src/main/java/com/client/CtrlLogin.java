@@ -54,7 +54,7 @@ public class CtrlLogin implements Initializable {
             
             // Intentar cargar fuente retro
             try {
-                retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/8bitOperatorPlus8-Regular.ttf"), 14);
+                retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/BrunoAce-Regular.ttf"), 14);
                 System.out.println("Fuente cargada: " + retroFont.getFamily());
             } catch (Exception e) {
                 System.out.println("No se pudo cargar fuente 8bitOperatorPlus8: " + e.getMessage());
@@ -271,7 +271,7 @@ public class CtrlLogin implements Initializable {
         url = urlField.getText().trim();
 
         if (playerName.isEmpty() || url.isEmpty()) {
-            Main.showAlert("Error", "Si us plau, completa tots els camps", AlertType.INFORMATION);
+            AlertManager.showAlert("Error", "Si us plau, completa tots els camps", AlertType.INFORMATION);
             return;
         }
 
@@ -296,7 +296,7 @@ public class CtrlLogin implements Initializable {
             } catch (InterruptedException ex) {
                 Platform.runLater(() -> {
                     setErrorState();
-                    Main.showAlert("Error de Connexió", "No s'ha pogut connectar al servidor", AlertType.INFORMATION);
+                    AlertManager.showAlert("Error de Connexió", "No s'ha pogut connectar al servidor", AlertType.INFORMATION);
                 });
             }
         }).start();

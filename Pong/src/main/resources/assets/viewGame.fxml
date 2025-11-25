@@ -6,75 +6,41 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
 
 <AnchorPane fx:id="gameContainer" minHeight="700.0" minWidth="1200.0" style="-fx-background-color: #000000;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.client.CtrlGame">
    <children>
-      <!-- Panel superior con marcador -->
-      <HBox alignment="CENTER" spacing="100.0" style="-fx-background-color: #111111; -fx-border-color: #333333; -fx-border-width: 0 0 2 0;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <!-- Panel superior con marcador - SIN MARCADORES INDIVIDUALES -->
+      <HBox alignment="CENTER" style="-fx-background-color: #111111; -fx-border-color: #333333; -fx-border-width: 0 0 2 0;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <padding>
-            <Insets bottom="15.0" top="15.0" />
+            <Insets bottom="20.0" top="20.0" />
          </padding>
          
-         <!-- Jugador 1 -->
-         <VBox alignment="CENTER" spacing="5.0">
-            <Label fx:id="player1Label" style="-fx-text-fill: #ffffff;" text="JUGADOR 1">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="14.0" />
-               </font>
-            </Label>
-            <Label fx:id="player1ScoreLabel" style="-fx-text-fill: #ffffff;" text="0">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="24.0" />
-               </font>
-            </Label>
+         <!-- Columna izquierda - Solo nombre del jugador -->
+         <VBox alignment="CENTER" prefWidth="400">
+            <Label fx:id="player1Label" style="-fx-text-fill: #ffffff; -fx-font-size: 18px;" text="JUGADOR 1" wrapText="true" maxWidth="350" textAlignment="CENTER"/>
          </VBox>
          
-         <!-- VS -->
-         <Label style="-fx-text-fill: #ffcc00;" text="VS">
-            <font>
-               <Font name="8bitOperatorPlus8-Regular" size="18.0" />
-            </font>
-         </Label>
-         
          <!-- Marcador central -->
-         <Label fx:id="scoreLabel" style="-fx-text-fill: #ffffff;" text="0 : 0">
-            <font>
-               <Font name="8bitOperatorPlus8-Regular" size="32.0" />
-            </font>
-         </Label>
-         
-         <!-- VS -->
-         <Label style="-fx-text-fill: #ffcc00;" text="VS">
-            <font>
-               <Font name="8bitOperatorPlus8-Regular" size="18.0" />
-            </font>
-         </Label>
-         
-         <!-- Jugador 2 -->
-         <VBox alignment="CENTER" spacing="5.0">
-            <Label fx:id="player2Label" style="-fx-text-fill: #ffffff;" text="JUGADOR 2">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="14.0" />
-               </font>
-            </Label>
-            <Label fx:id="player2ScoreLabel" style="-fx-text-fill: #ffffff;" text="0">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="24.0" />
-               </font>
-            </Label>
+         <VBox alignment="CENTER" prefWidth="200">
+            <Label fx:id="scoreLabel" style="-fx-text-fill: #ffffff; -fx-font-size: 32px; -fx-font-weight: bold;" text="0 : 0"/>
+         </VBox>
+
+         <!-- Columna derecha - Solo nombre del jugador -->
+         <VBox alignment="CENTER" prefWidth="400">
+            <Label fx:id="player2Label" style="-fx-text-fill: #ffffff; -fx-font-size: 18px;" text="JUGADOR 2" wrapText="true" maxWidth="350" textAlignment="CENTER"/>
          </VBox>
       </HBox>
       
-      <!-- Canvas del juego -->
-      <Canvas fx:id="gameCanvas" height="500.0" width="800.0" AnchorPane.bottomAnchor="100.0" AnchorPane.leftAnchor="200.0" AnchorPane.rightAnchor="200.0" AnchorPane.topAnchor="80.0" />
+      <!-- Contenedor centrado para el canvas -->
+      <StackPane AnchorPane.bottomAnchor="50.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="70.0">
+         <Canvas fx:id="gameCanvas" height="500.0" width="800.0" />
+      </StackPane>
       
       <!-- Mensaje de cuenta regresiva (overlay) -->
       <VBox fx:id="countdownOverlay" alignment="CENTER" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <Label fx:id="countdownLabel" style="-fx-text-fill: #ffffff; -fx-font-size: 72px;" text="3">
-            <font>
-               <Font name="8bitOperatorPlus8-Regular" size="72.0" />
-            </font>
          </Label>
       </VBox>
    </children>

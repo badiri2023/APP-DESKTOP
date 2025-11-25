@@ -631,12 +631,6 @@ public class CtrlGame implements Initializable {
         if (scoreLabel != null) {
             scoreLabel.setText(player1Score + " : " + player2Score);
         }
-        if (player1ScoreLabel != null) {
-            player1ScoreLabel.setText(String.valueOf(player1Score));
-        }
-        if (player2ScoreLabel != null) {
-            player2ScoreLabel.setText(String.valueOf(player2Score));
-        }
     }
     
     public void stopGame() {

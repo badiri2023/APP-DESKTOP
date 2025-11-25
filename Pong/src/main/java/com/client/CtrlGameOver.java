@@ -255,12 +255,12 @@ public class CtrlGameOver implements Initializable {
     // NUEVO: Configurar winnerLabel para mostrar información completa
     private void configureWinnerLabel() {
         if (winnerLabel != null) {
-            // winnerLabel ahora muestra: "GANADOR: [Nombre]" o "PERDEDOR: [TuNombre]"
+            // winnerLabel ahora muestra: "WINNER: [Nombre]" o "LOSER: [TuNombre]"
             if (isCurrentPlayerWinner) {
-                winnerLabel.setText("GANADOR: " + Main.ctrlLogin.getUserName());
+                winnerLabel.setText("WINNER: " + Main.ctrlLogin.getUserName());
                 System.out.println("Configurado como GANADOR: " + Main.ctrlLogin.getUserName());
             } else {
-                winnerLabel.setText("PERDEDOR: " + Main.ctrlLogin.getUserName());
+                winnerLabel.setText("LOSER: " + Main.ctrlLogin.getUserName());
                 System.out.println("Configurado como PERDEDOR: " + Main.ctrlLogin.getUserName());
             }
         }
@@ -280,18 +280,18 @@ public class CtrlGameOver implements Initializable {
             
             System.out.println("Aplicando colores - P1 es ganador: " + player1IsWinner + ", P2 es ganador: " + player2IsWinner);
             
-            // Aplicar colores a AMBAS playerLabels
-            if (player1IsWinner) {
-                // Player 1 GANADOR (VERDE), Player 2 PERDEDOR (ROJO)
-                player1Label.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 3, 0, 0, 0);");
-                player2Label.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 3, 0, 0, 0);");
-                System.out.println("Player1 VERDE (ganador), Player2 ROJO (perdedor)");
-            } else if (player2IsWinner) {
-                // Player 2 GANADOR (VERDE), Player 1 PERDEDOR (ROJO)
-                player1Label.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 3, 0, 0, 0);");
-                player2Label.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 3, 0, 0, 0);");
-                System.out.println("Player2 VERDE (ganador), Player1 ROJO (perdedor)");
-            }
+            // // Aplicar colores a AMBAS playerLabels
+            // if (player1IsWinner) {
+            //     // Player 1 GANADOR (VERDE), Player 2 PERDEDOR (ROJO)
+            //     player1Label.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 3, 0, 0, 0);");
+            //     player2Label.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 3, 0, 0, 0);");
+            //     System.out.println("Player1 VERDE (ganador), Player2 ROJO (perdedor)");
+            // } else if (player2IsWinner) {
+            //     // Player 2 GANADOR (VERDE), Player 1 PERDEDOR (ROJO)
+            //     player1Label.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 3, 0, 0, 0);");
+            //     player2Label.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 3, 0, 0, 0);");
+            //     System.out.println("Player2 VERDE (ganador), Player1 ROJO (perdedor)");
+            // }
             
             // GameOverLabel y winnerLabel según el jugador actual
             if (isCurrentPlayerWinner) {

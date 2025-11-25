@@ -15,34 +15,17 @@
          </padding>
          
          <!-- Título de carga -->
-         <Label fx:id="loadingText" style="-fx-text-fill: #ffffff;" text="CARGANDO...">
-            <font>
-               <Font name="8bitOperatorPlus8-Regular" size="24.0" />
-            </font>
-         </Label>
-         
-         <!-- ✅ NUEVO: Label para mensajes temporales -->
-         <Label fx:id="messageLabel" style="-fx-text-fill: #00ffff;" text="Mensaje temporal" visible="false">
-            <font>
-               <Font name="8bitOperatorPlus8-Regular" size="20.0" />
-            </font>
-         </Label>
+         <Label fx:id="loadingText" style="-fx-text-fill: #ffffff;" text="CARGANDO..."/>
+
+         <Label fx:id="messageLabel" style="-fx-text-fill: #00ffff;" text="Mensaje temporal" visible="false"/>
          
          <!-- Barra de progreso -->
          <ProgressBar fx:id="loadingBar" prefWidth="400.0" progress="0.0" />
          
          <!-- Footer -->
          <VBox alignment="CENTER" spacing="5.0" VBox.vgrow="ALWAYS">
-            <Label style="-fx-text-fill: #333333;" text="PONG ARCADE SYSTEM">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="12.0" />
-               </font>
-            </Label>
-            <Label style="-fx-text-fill: #666666;" text="PREPARANDO PARTIDA...">
-               <font>
-                  <Font name="8bitOperatorPlus8-Regular" size="10.0" />
-               </font>
-            </Label>
+            <Label style="-fx-text-fill: #333333;" text="27 D 2025"/>
+            <Label style="-fx-text-fill: #666666;" text="PREPARANDO PARTIDA..."/>
          </VBox>
       </VBox>
    </children>

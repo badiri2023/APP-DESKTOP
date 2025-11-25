@@ -365,7 +365,7 @@ public class Main extends Application {
                 CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
                 if (ctrlLoading != null) {
                     ctrlLoading.showTemporaryMessage(textMessage, ttlMs);
-                    System.out.println("Mensaje 'Starts Player' mostrado en ViewLoading: " + textMessage);
+                    System.out.println("🎯 Mensaje 'Starts Player' mostrado en ViewLoading: " + textMessage);
                     
                     // NUEVO: Esperar a que termine el mensaje y luego ir al juego
                     Main.pauseDuring(ttlMs + 500, () -> {
@@ -396,7 +396,7 @@ public class Main extends Application {
                     if (ctrlGame != null) {
                         ctrlGame.setPlayerRole(pendingGameInfo.role, pendingGameInfo.opponent);
                         ctrlGame.startGameSequence();
-                        System.out.println("Juego iniciado después de carga extendida");
+                        System.out.println("🎮 Juego iniciado después de carga extendida");
                     }
                     pendingGameInfo = null;
                 });
@@ -420,7 +420,7 @@ public class Main extends Application {
         
         // NUEVO: Si estamos en ViewLoading y llega el countdown, es hora de ir al juego
         if ("3".equals(countdownValue) && pendingGameInfo != null) {
-            System.out.println("Countdown 3 recibido - Completando carga...");
+            System.out.println("⏰ Countdown 3 recibido - Completando carga...");
             completeLoadingAndStartGame();
             return;
         }

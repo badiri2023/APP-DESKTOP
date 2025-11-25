@@ -87,7 +87,7 @@ public class CtrlLoading implements Initializable {
             messageLabel.setText(message);
             messageLabel.setVisible(true);
             
-            System.out.println("📢 Mostrando mensaje en Loading: " + message + " por " + durationMs + "ms");
+            System.out.println("Mostrando mensaje en Loading: " + message + " por " + durationMs + "ms");
             
             // Crear timeline para ocultar el mensaje después del tiempo especificado
             messageTimeline = new Timeline(

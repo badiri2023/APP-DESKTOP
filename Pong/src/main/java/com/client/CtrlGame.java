@@ -15,12 +15,16 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -52,17 +56,28 @@ public class CtrlGame implements Initializable {
     private boolean countdownActive = false;
     private String countdownValue = "";
     
-    // Nuevas variables para el flujo mejorado
+    // Variables para el flujo mejorado
     private String playerRole = "";
     private String opponentName = "";
     private GamePhase currentPhase = GamePhase.WAITING;
     
-    // Dimensiones del juego
-    private final double PADDLE_WIDTH = 15;
-    private final double PADDLE_HEIGHT = 80;
-    private final double BALL_SIZE = 15;
-    private final double FIELD_WIDTH = 800;
-    private final double FIELD_HEIGHT = 500;
+    // Dimensiones base para el juego (referencia)
+    private final double BASE_FIELD_WIDTH = 800;
+    private final double BASE_FIELD_HEIGHT = 500;
+    private final double BASE_PADDLE_WIDTH = 15;
+    private final double BASE_PADDLE_HEIGHT = 80;
+    private final double BASE_BALL_SIZE = 15;
+
+    // Factores de escala actuales
+    private double scaleX = 1.0;
+    private double scaleY = 1.0;
+    
+    // Dimensiones actuales (calculadas)
+    private double currentFieldWidth;
+    private double currentFieldHeight;
+    private double currentPaddleWidth;
+    private double currentPaddleHeight;
+    private double currentBallSize;
 
     private boolean upPressed = false;
     private boolean downPressed = false;
@@ -75,9 +90,12 @@ public class CtrlGame implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
-            // Configurar canvas
-            gameCanvas.setWidth(FIELD_WIDTH);
-            gameCanvas.setHeight(FIELD_HEIGHT);
+            // Configurar listener para cambios de tamaño
+            setupResizeListener();
+            
+            // Configurar canvas inicial
+            setupCanvas();
+            
             gc = gameCanvas.getGraphicsContext2D();
             
             // Cargar fuente
@@ -109,6 +127,81 @@ public class CtrlGame implements Initializable {
         }
     }
 
+    /**
+     * Configura el listener para cambios de tamaño de la ventana
+     */
+    private void setupResizeListener() {
+        // Escuchar cambios en el tamaño del contenedor padre
+        gameContainer.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.widthProperty().addListener((obsWidth, oldWidth, newWidth) -> {
+                    updateCanvasSize();
+                });
+                newScene.heightProperty().addListener((obsHeight, oldHeight, newHeight) -> {
+                    updateCanvasSize();
+                });
+                
+                // Actualizar tamaño inicial
+                Platform.runLater(this::updateCanvasSize);
+            }
+        });
+    }
+
+    /**
+     * Actualiza el tamaño del canvas según las dimensiones disponibles
+     */
+    private void updateCanvasSize() {
+        if (gameContainer.getScene() == null) return;
+        
+        double availableWidth = gameContainer.getWidth();
+        double availableHeight = gameContainer.getHeight() - 120; // Restar espacio para marcador y márgenes
+        
+        if (availableWidth <= 0 || availableHeight <= 0) return;
+        
+        // Calcular escala manteniendo aspect ratio
+        double widthRatio = availableWidth / BASE_FIELD_WIDTH;
+        double heightRatio = availableHeight / BASE_FIELD_HEIGHT;
+        double scale = Math.min(widthRatio, heightRatio);
+        
+        // Limitar escala máxima y mínima
+        scale = Math.max(0.5, Math.min(scale, 2.0));
+        
+        this.scaleX = scale;
+        this.scaleY = scale;
+        
+        // Calcular dimensiones actuales
+        this.currentFieldWidth = BASE_FIELD_WIDTH * scale;
+        this.currentFieldHeight = BASE_FIELD_HEIGHT * scale;
+        this.currentPaddleWidth = BASE_PADDLE_WIDTH * scale;
+        this.currentPaddleHeight = BASE_PADDLE_HEIGHT * scale;
+        this.currentBallSize = BASE_BALL_SIZE * scale;
+        
+        // Aplicar nuevo tamaño al canvas
+        gameCanvas.setWidth(currentFieldWidth);
+        gameCanvas.setHeight(currentFieldHeight);
+        
+        System.out.println(String.format("Canvas actualizado: %.1fx%.1f (escala: %.2f)", 
+            currentFieldWidth, currentFieldHeight, scale));
+        
+        // Forzar redibujado
+        renderGame();
+    }
+
+    /**
+     * Configuración inicial del canvas
+     */
+    private void setupCanvas() {
+        // Usar dimensiones base inicialmente
+        this.currentFieldWidth = BASE_FIELD_WIDTH;
+        this.currentFieldHeight = BASE_FIELD_HEIGHT;
+        this.currentPaddleWidth = BASE_PADDLE_WIDTH;
+        this.currentPaddleHeight = BASE_PADDLE_HEIGHT;
+        this.currentBallSize = BASE_BALL_SIZE;
+        
+        gameCanvas.setWidth(currentFieldWidth);
+        gameCanvas.setHeight(currentFieldHeight);
+    }
+
     private void setupContinuousMovement() {
         movementTimeline = new Timeline(
             new KeyFrame(Duration.millis(16), e -> handleContinuousMovement())
@@ -134,33 +227,22 @@ public class CtrlGame implements Initializable {
         }
     }
     
-    // NUEVO MÉTODO: Iniciar secuencia completa del juego
+    /**
+     * Iniciar secuencia completa del juego
+     */
     public void startGameSequence() {
         resetGame();
         currentPhase = GamePhase.WAITING;
         System.out.println("Secuencia de juego iniciada - Esperando mensajes del servidor...");
     }
     
-    // NUEVO MÉTODO: Mostrar animación de elección de jugador inicial
+    /**
+     * Mostrar animación de elección de jugador inicial
+     */
     public void showChoosingStarter() {
         currentPhase = GamePhase.CHOOSING;
         System.out.println("Servidor eligiendo jugador inicial...");
     }
-    
-    // NUEVO MÉTODO: Mostrar anuncio de quién inicia
-    // public void showStarterAnnouncement(String message, long duration) {
-    //     currentPhase = GamePhase.ANNOUNCING;
-    //     countdownValue = message;
-    //     countdownActive = true;
-        
-    //     // Configurar timer para ocultar el anuncio
-    //     PauseTransition pause = new PauseTransition(Duration.millis(duration));
-    //     pause.setOnFinished(e -> {
-    //         countdownActive = false;
-    //         // La cuenta regresiva comenzará automáticamente desde el servidor
-    //     });
-    //     pause.play();
-    // }
     
     public void setPlayerRole(String role, String opponent) {
         this.playerRole = role;
@@ -204,12 +286,12 @@ public class CtrlGame implements Initializable {
         // Suavizado de movimiento para reducir latencia visual
         double smoothing = 0.9;
         
-        this.player1Y = smoothing * this.player1Y + (1 - smoothing) * (p1Y * (FIELD_HEIGHT - PADDLE_HEIGHT));
-        this.player2Y = smoothing * this.player2Y + (1 - smoothing) * (p2Y * (FIELD_HEIGHT - PADDLE_HEIGHT));
+        this.player1Y = smoothing * this.player1Y + (1 - smoothing) * (p1Y * (currentFieldHeight - currentPaddleHeight));
+        this.player2Y = smoothing * this.player2Y + (1 - smoothing) * (p2Y * (currentFieldHeight - currentPaddleHeight));
         
         // Para la pelota, menos suavizado para mayor responsividad
-        this.ballX = ballX * (FIELD_WIDTH - BALL_SIZE);
-        this.ballY = ballY * (FIELD_HEIGHT - BALL_SIZE);
+        this.ballX = ballX * (currentFieldWidth - currentBallSize);
+        this.ballY = ballY * (currentFieldHeight - currentBallSize);
         
         this.player1Score = score1;
         this.player2Score = score2;
@@ -223,7 +305,7 @@ public class CtrlGame implements Initializable {
             gameActive = true;
             currentPhase = GamePhase.PLAYING;
             countdownValue = "";
-            System.out.println("¡JUEGO INICIADO!");
+            System.out.println("JUEGO INICIADO");
             
             Platform.runLater(() -> {
                 gameContainer.requestFocus();
@@ -261,13 +343,25 @@ public class CtrlGame implements Initializable {
             scoreLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.8), 5, 0, 0, 0);");
             updateScoreDisplay();
         }
+        
+        // Estilos para labels de jugadores - más centrados
+        if (player1Label != null) {
+            player1Label.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 18));
+            player1Label.setTextFill(Color.WHITE);
+            player1Label.setStyle("-fx-alignment: center;");
+        }
+        if (player2Label != null) {
+            player2Label.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 18));
+            player2Label.setTextFill(Color.WHITE);
+            player2Label.setStyle("-fx-alignment: center;");
+        }
     }
     
     private void resetGame() {
-        player1Y = FIELD_HEIGHT / 2 - PADDLE_HEIGHT / 2;
-        player2Y = FIELD_HEIGHT / 2 - PADDLE_HEIGHT / 2;
-        ballX = FIELD_WIDTH / 2 - BALL_SIZE / 2;
-        ballY = FIELD_HEIGHT / 2 - BALL_SIZE / 2;
+        player1Y = currentFieldHeight / 2 - currentPaddleHeight / 2;
+        player2Y = currentFieldHeight / 2 - currentPaddleHeight / 2;
+        ballX = currentFieldWidth / 2 - currentBallSize / 2;
+        ballY = currentFieldHeight / 2 - currentBallSize / 2;
         
         player1Score = 0;
         player2Score = 0;
@@ -334,11 +428,11 @@ public class CtrlGame implements Initializable {
         if (event.getCode() == KeyCode.UP) {
             moveDelta = -0.08;
             moved = true;
-            System.out.println("↑ Moviendo hacia ARRIBA");
+            System.out.println("Moviendo hacia ARRIBA");
         } else if (event.getCode() == KeyCode.DOWN) {
             moveDelta = 0.08;
             moved = true;
-            System.out.println("↓ Moviendo hacia ABAJO");
+            System.out.println("Moviendo hacia ABAJO");
         }
         
         if (moved) {
@@ -355,7 +449,6 @@ public class CtrlGame implements Initializable {
         }
     }
     
-    // ✅ NUEVO: Detener movimiento continuo
     private void stopContinuousMovement() {
         if (movementTimeline != null) {
             movementTimeline.stop();
@@ -370,10 +463,10 @@ public class CtrlGame implements Initializable {
             // Obtener posición actual NORMALIZADA (0-1)
             double currentY;
             if ("p1".equals(playerRole)) {
-                currentY = player1Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
+                currentY = player1Y / (currentFieldHeight - currentPaddleHeight);
                 System.out.println("Jugador: P1 (Izquierda)");
             } else {
-                currentY = player2Y / (FIELD_HEIGHT - PADDLE_HEIGHT);
+                currentY = player2Y / (currentFieldHeight - currentPaddleHeight);
                 System.out.println("Jugador: P2 (Derecha)");
             }
             
@@ -396,9 +489,9 @@ public class CtrlGame implements Initializable {
                 
                 // Actualizar visualmente localmente también
                 if ("p1".equals(playerRole)) {
-                    player1Y = newY * (FIELD_HEIGHT - PADDLE_HEIGHT);
+                    player1Y = newY * (currentFieldHeight - currentPaddleHeight);
                 } else {
-                    player2Y = newY * (FIELD_HEIGHT - PADDLE_HEIGHT);
+                    player2Y = newY * (currentFieldHeight - currentPaddleHeight);
                 }
             } else {
                 System.out.println("ERROR: WebSocket client es NULL");
@@ -419,13 +512,13 @@ public class CtrlGame implements Initializable {
 
     public void verifyGameState() {
         if (currentPhase == GamePhase.PLAYING && !gameActive) {
-            System.err.println("⚠️ Estado inconsistente - Corrigiendo...");
+            System.err.println("Estado inconsistente - Corrigiendo...");
             gameActive = true;
         }
         
         // Verificar que las coordenadas estén en rango
-        player1Y = Math.max(0, Math.min(FIELD_HEIGHT - PADDLE_HEIGHT, player1Y));
-        player2Y = Math.max(0, Math.min(FIELD_HEIGHT - PADDLE_HEIGHT, player2Y));
+        player1Y = Math.max(0, Math.min(currentFieldHeight - currentPaddleHeight, player1Y));
+        player2Y = Math.max(0, Math.min(currentFieldHeight - currentPaddleHeight, player2Y));
     }
     
     private void startGameLoop() {
@@ -439,7 +532,7 @@ public class CtrlGame implements Initializable {
     }
     
     private void renderGame() {
-        gc.clearRect(0, 0, FIELD_WIDTH, FIELD_HEIGHT);
+        gc.clearRect(0, 0, currentFieldWidth, currentFieldHeight);
         
         // Dibujar campo (siempre visible)
         drawField();
@@ -471,30 +564,30 @@ public class CtrlGame implements Initializable {
     private void drawField() {
         // Campo de juego
         gc.setStroke(Color.WHITE);
-        gc.setLineWidth(2);
-        gc.strokeRect(0, 0, FIELD_WIDTH, FIELD_HEIGHT);
+        gc.setLineWidth(2 * scaleX);
+        gc.strokeRect(0, 0, currentFieldWidth, currentFieldHeight);
         
         // Línea central punteada
-        gc.setLineWidth(1);
-        gc.setLineDashes(10);
-        gc.strokeLine(FIELD_WIDTH / 2, 0, FIELD_WIDTH / 2, FIELD_HEIGHT);
+        gc.setLineWidth(1 * scaleX);
+        gc.setLineDashes(10 * scaleX);
+        gc.strokeLine(currentFieldWidth / 2, 0, currentFieldWidth / 2, currentFieldHeight);
         gc.setLineDashes(null);
     }
     
     private void drawChoosingPhase() {
         gc.setFill(Color.YELLOW);
-        gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 32));
+        gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 32 * scaleX));
         gc.setTextAlign(TextAlignment.CENTER);
-        gc.fillText("ELIGIENDO JUGADOR INICIAL...", FIELD_WIDTH / 2, FIELD_HEIGHT / 2);
+        gc.fillText("ELIGIENDO JUGADOR INICIAL...", currentFieldWidth / 2, currentFieldHeight / 2);
         gc.setTextAlign(TextAlignment.LEFT);
     }
     
     private void drawAnnouncingPhase() {
         if (countdownActive) {
             gc.setFill(Color.CYAN);
-            gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 28));
+            gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 28 * scaleX));
             gc.setTextAlign(TextAlignment.CENTER);
-            gc.fillText(countdownValue, FIELD_WIDTH / 2, FIELD_HEIGHT / 2);
+            gc.fillText(countdownValue, currentFieldWidth / 2, currentFieldHeight / 2);
             gc.setTextAlign(TextAlignment.LEFT);
         }
     }
@@ -502,9 +595,9 @@ public class CtrlGame implements Initializable {
     private void drawCountdownPhase() {
         if (countdownActive) {
             gc.setFill(Color.WHITE);
-            gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 48));
+            gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 48 * scaleX));
             gc.setTextAlign(TextAlignment.CENTER);
-            gc.fillText(countdownValue, FIELD_WIDTH / 2, FIELD_HEIGHT / 2);
+            gc.fillText(countdownValue, currentFieldWidth / 2, currentFieldHeight / 2);
             gc.setTextAlign(TextAlignment.LEFT);
         }
     }
@@ -512,15 +605,15 @@ public class CtrlGame implements Initializable {
     private void drawPlayingPhase() {
         // Dibujar palas
         gc.setFill(Color.WHITE);
-        gc.fillRect(0, player1Y, PADDLE_WIDTH, PADDLE_HEIGHT);
-        gc.fillRect(FIELD_WIDTH - PADDLE_WIDTH, player2Y, PADDLE_WIDTH, PADDLE_HEIGHT);
+        gc.fillRect(0, player1Y, currentPaddleWidth, currentPaddleHeight);
+        gc.fillRect(currentFieldWidth - currentPaddleWidth, player2Y, currentPaddleWidth, currentPaddleHeight);
         
         // Dibujar pelota
-        gc.fillOval(ballX, ballY, BALL_SIZE, BALL_SIZE);
+        gc.fillOval(ballX, ballY, currentBallSize, currentBallSize);
         
         // Información del rol
         if (!playerRole.isEmpty()) {
-            gc.setFont(Font.font(retroFont.getFamily(), 12));
+            gc.setFont(Font.font(retroFont.getFamily(), 12 * scaleX));
             gc.setFill(Color.GRAY);
             gc.fillText("Tú: " + ("p1".equals(playerRole) ? "Jugador 1 (Izq)" : "Jugador 2 (Der)"), 10, 20);
         }
@@ -528,9 +621,9 @@ public class CtrlGame implements Initializable {
     
     private void drawWaitingPhase() {
         gc.setFill(Color.WHITE);
-        gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 24));
+        gc.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 24 * scaleX));
         gc.setTextAlign(TextAlignment.CENTER);
-        gc.fillText("ESPERANDO INICIO DE PARTIDA", FIELD_WIDTH / 2, FIELD_HEIGHT / 2);
+        gc.fillText("ESPERANDO INICIO DE PARTIDA", currentFieldWidth / 2, currentFieldHeight / 2);
         gc.setTextAlign(TextAlignment.LEFT);
     }
     

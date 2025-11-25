@@ -303,53 +303,6 @@ public class Main extends Application {
         }
     }
 
-    private static void handleChallengeReceived(JSONObject json) {
-        String fromPlayer = json.optString("from", "");
-        System.out.println("INVITACIÓN RECIBIDA DE: " + fromPlayer);
-        
-        AlertManager.showIncomingInvitationDialog(fromPlayer,
-            () -> acceptIncomingInvitation(fromPlayer),  // onAccept
-            () -> rejectIncomingInvitation(fromPlayer)   // onReject
-        );
-    }
-
-    private static void handleChallengeDeclined(JSONObject json) {
-        String decliner = json.optString("from", "");
-        Platform.runLater(() -> {
-            UtilsViews.setViewAnimating("ViewOpponentSelection");
-            AlertManager.showAlert("Invitación Rechazada", decliner + " rechazó tu invitación", AlertType.INFORMATION);
-            CtrlOpponentSelection.clearInvitation();
-            requestPlayersList();
-        });
-    }
-
-    private static void handleGameStart(JSONObject json) {
-        String opponent = json.optString("opponent", "");
-        String role = json.optString("role", "");
-        Platform.runLater(() -> {
-            System.out.println("Iniciando partida - Rol: " + role + ", Oponente: " + opponent);
-            CtrlOpponentSelection.clearInvitation();
-
-            UtilsViews.setViewAnimating("ViewLoading");
-            
-            CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
-            if (ctrlLoading != null) {
-                ctrlLoading.setLoadingMessage("CARGANDO PARTIDA...");
-                
-                // MODIFICADO: Iniciar animación de carga PERO NO TERMINAR AUTOMÁTICAMENTE
-                // Ahora esperaremos mensajes del servidor para continuar
-                ctrlLoading.startIndeterminateLoading();
-                
-                System.out.println("ViewLoading iniciada - Esperando mensajes del servidor...");
-            } else {
-                System.err.println("CtrlLoading no disponible");
-            }
-            
-            // NUEVO: Guardar información para usar después
-            pendingGameInfo = new GameInfo(opponent, role);
-        });
-    }
-
     private static class GameInfo {
         String opponent;
         String role;
@@ -589,6 +542,86 @@ public class Main extends Application {
         } catch (Exception e) {
             System.err.println("Error rechazando revancha: " + e.getMessage());
         }
+    }
+
+    private static void handleChallengeReceived(JSONObject json) {
+        String fromPlayer = json.optString("from", "");
+        System.out.println("INVITACIÓN RECIBIDA DE: " + fromPlayer);
+        
+        // Verificar si estamos en ViewGameOver (revancha) o ViewOpponentSelection (invitación normal)
+        String currentView = UtilsViews.getActiveView();
+        
+        if ("ViewGameOver".equals(currentView)) {
+            // Es una revancha - mostrar diálogo especial
+            Platform.runLater(() -> {
+                AlertManager.showConfirmationDialog(
+                    "Revancha Solicitada",
+                    "¿Aceptas la revancha contra " + fromPlayer + "?",
+                    () -> acceptIncomingInvitation(fromPlayer),
+                    () -> rejectIncomingInvitation(fromPlayer)
+                );
+            });
+        } else {
+            // Invitación normal - usar el diálogo estándar
+            AlertManager.showIncomingInvitationDialog(fromPlayer,
+                () -> acceptIncomingInvitation(fromPlayer),
+                () -> rejectIncomingInvitation(fromPlayer)
+            );
+        }
+    }
+
+    private static void handleChallengeDeclined(JSONObject json) {
+        String decliner = json.optString("from", "");
+        Platform.runLater(() -> {
+            String currentView = UtilsViews.getActiveView();
+            
+            if ("ViewGameOver".equals(currentView)) {
+                // Notificar a ViewGameOver que la revancha fue rechazada
+                CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
+                if (ctrlGameOver != null) {
+                    ctrlGameOver.handleInvitationDeclined();
+                }
+            } else {
+                // Comportamiento normal para ViewOpponentSelection
+                UtilsViews.setViewAnimating("ViewOpponentSelection");
+                AlertManager.showAlert("Invitación Rechazada", decliner + " rechazó tu invitación", AlertType.INFORMATION);
+                CtrlOpponentSelection.clearInvitation();
+                requestPlayersList();
+            }
+        });
+    }
+
+    private static void handleGameStart(JSONObject json) {
+        String opponent = json.optString("opponent", "");
+        String role = json.optString("role", "");
+        Platform.runLater(() -> {
+            System.out.println("Iniciando partida - Rol: " + role + ", Oponente: " + opponent);
+            
+            String currentView = UtilsViews.getActiveView();
+            
+            if ("ViewGameOver".equals(currentView)) {
+                // Notificar a ViewGameOver que la revancha fue aceptada
+                CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
+                if (ctrlGameOver != null) {
+                    ctrlGameOver.handleInvitationAccepted();
+                }
+            }
+            
+            // Limpiar invitación pendiente
+            CtrlOpponentSelection.clearInvitation();
+
+            // Proceder con el flujo normal del juego
+            UtilsViews.setViewAnimating("ViewLoading");
+            
+            CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
+            if (ctrlLoading != null) {
+                ctrlLoading.setLoadingMessage("CARGANDO PARTIDA...");
+                ctrlLoading.startIndeterminateLoading();
+            }
+            
+            // Guardar información para usar después
+            pendingGameInfo = new GameInfo(opponent, role);
+        });
     }
 
     // ========== MÉTODOS DE INVITACIÓN ==========

@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
@@ -320,18 +321,22 @@ public class CtrlGameOver implements Initializable {
             
             if (rematchStatus != null) {
                 rematchStatus.setVisible(true);
-                rematchStatusLabel.setText("Solicitando revancha...");
+                rematchStatusLabel.setText("Enviando invitación de revancha...");
             }
             
-            sendRematchRequest();
+            sendRematchInvitation();
         }
     }
 
     @FXML
     private void handleReturnToLobby() {
-        // Limpiar estado de revancha
+        // Limpiar estado
         rematchProposed = false;
         rematchAccepted = false;
+        this.player1Name = "";
+        this.player2Name = "";
+        this.winnerName = "";
+        this.opponentName = "";
         
         // Volver al lobby
         UtilsViews.setViewAnimating("ViewOpponentSelection");
@@ -340,6 +345,82 @@ public class CtrlGameOver implements Initializable {
         if (Main.ctrlOpponentSelection != null) {
             Main.requestPlayersList();
         }
+    }
+
+    private void sendRematchInvitation() {
+        try {
+            // Usar el sistema normal de invitaciones para la revancha
+            JSONObject invitation = new JSONObject();
+            invitation.put("type", "challenge");
+            invitation.put("to", opponentName);
+            invitation.put("from", Main.ctrlLogin.getUserName());
+            
+            Main.wsClient.safeSend(invitation.toString());
+            System.out.println("Invitación de revancha enviada a: " + opponentName);
+            
+            // Iniciar timeout para la invitación
+            startInvitationTimeout();
+            
+        } catch (Exception e) {
+            System.err.println("Error enviando invitación de revancha: " + e.getMessage());
+            // Restablecer botón en caso de error
+            rematchButton.setText("Revancha");
+            rematchButton.setDisable(false);
+            if (rematchStatus != null) {
+                rematchStatusLabel.setText("Error al enviar invitación");
+            }
+        }
+    }
+
+    private void startInvitationTimeout() {
+        new Thread(() -> {
+            try {
+                Thread.sleep(30000); // 30 segundos timeout
+                
+                Platform.runLater(() -> {
+                    if (rematchProposed && !rematchAccepted) {
+                        rematchProposed = false;
+                        rematchButton.setText("Revancha");
+                        rematchButton.setDisable(false);
+                        if (rematchStatus != null) {
+                            rematchStatusLabel.setText("La invitación ha expirado");
+                        }
+                        
+                        // Mostrar alerta
+                        AlertManager.showAlert("Tiempo Agotado", 
+                            "La invitación de revancha a " + opponentName + " ha expirado.", 
+                            AlertType.WARNING);
+                    }
+                });
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+    }
+
+    // Método para manejar cuando la invitación es aceptada (desde Main)
+    public void handleInvitationAccepted() {
+        Platform.runLater(() -> {
+            rematchAccepted = true;
+            rematchStatusLabel.setText("¡Revancha aceptada! Iniciando...");
+            
+            // La transición a ViewLoading se hará desde Main cuando llegue game_start
+            System.out.println("Revancha aceptada - esperando inicio de partida...");
+        });
+    }
+
+    // Método para manejar cuando la invitación es rechazada (desde Main)
+    public void handleInvitationDeclined() {
+        Platform.runLater(() -> {
+            rematchProposed = false;
+            rematchButton.setText("Revancha");
+            rematchButton.setDisable(false);
+            rematchStatusLabel.setText("Revancha rechazada");
+            
+            AlertManager.showAlert("Revancha Rechazada", 
+                opponentName + " ha rechazado tu invitación de revancha.", 
+                AlertType.INFORMATION);
+        });
     }
 
     private void sendRematchRequest() {

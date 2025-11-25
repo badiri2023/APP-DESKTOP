@@ -18,12 +18,12 @@ import javafx.util.Duration;
 public class CtrlLoading implements Initializable {
 
     @FXML private Label loadingText;
-    @FXML private Label messageLabel; // ✅ NUEVO: Label para mensajes
+    @FXML private Label messageLabel; // NUEVO: Label para mensajes
     @FXML private ProgressBar loadingBar;
     
     private Timeline loadingTimeline;
     private Timeline textAnimation;
-    private Timeline messageTimeline; // ✅ NUEVO: Timeline para mensajes temporales
+    private Timeline messageTimeline; // NUEVO: Timeline para mensajes temporales
     private Font retroFont;
 
     @Override
@@ -50,7 +50,7 @@ public class CtrlLoading implements Initializable {
             loadingText.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.8), 5, 0, 0, 0);");
         }
         
-        // ✅ NUEVO: Estilo del label de mensajes
+        // NUEVO: Estilo del label de mensajes
         if (messageLabel != null) {
             messageLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 20));
             messageLabel.setTextFill(Color.CYAN);
@@ -93,7 +93,7 @@ public class CtrlLoading implements Initializable {
             messageTimeline = new Timeline(
                 new KeyFrame(Duration.millis(durationMs), e -> {
                     messageLabel.setVisible(false);
-                    System.out.println("✅ Mensaje ocultado: " + message);
+                    System.out.println("Mensaje ocultado: " + message);
                 })
             );
             messageTimeline.play();

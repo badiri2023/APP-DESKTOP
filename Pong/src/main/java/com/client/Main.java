@@ -85,9 +85,9 @@ public class Main extends Application {
                     ctrlOpponentSelection = (CtrlOpponentSelection) UtilsViews.getController(viewName);
                 }
                 
-                System.out.println("✅ Vista " + viewName + " cargada correctamente");
+                System.out.println("Vista " + viewName + " cargada correctamente");
             } catch (Exception e) {
-                System.err.println("❌ Error cargando " + viewName + ": " + e.getMessage());
+                System.err.println("Error cargando " + viewName + ": " + e.getMessage());
                 if ("ViewLogin".equals(viewName)) {
                     AlertManager.showErrorAndExit("No se pudo cargar la vista de login");
                     return;
@@ -320,16 +320,16 @@ public class Main extends Application {
             if (ctrlLoading != null) {
                 ctrlLoading.setLoadingMessage("CARGANDO PARTIDA...");
                 
-                // ✅ MODIFICADO: Iniciar animación de carga PERO NO TERMINAR AUTOMÁTICAMENTE
+                // MODIFICADO: Iniciar animación de carga PERO NO TERMINAR AUTOMÁTICAMENTE
                 // Ahora esperaremos mensajes del servidor para continuar
                 ctrlLoading.startIndeterminateLoading();
                 
-                System.out.println("✅ ViewLoading iniciada - Esperando mensajes del servidor...");
+                System.out.println("ViewLoading iniciada - Esperando mensajes del servidor...");
             } else {
-                System.err.println("❌ CtrlLoading no disponible");
+                System.err.println("CtrlLoading no disponible");
             }
             
-            // ✅ NUEVO: Guardar información para usar después
+            // NUEVO: Guardar información para usar después
             pendingGameInfo = new GameInfo(opponent, role);
         });
     }
@@ -361,18 +361,18 @@ public class Main extends Application {
         
         if (textMessage.contains("Starts Player")) {
             Platform.runLater(() -> {
-                // ✅ MEJORADO: Mostrar en ViewLoading y luego continuar al juego
+                // MEJORADO: Mostrar en ViewLoading y luego continuar al juego
                 CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
                 if (ctrlLoading != null) {
                     ctrlLoading.showTemporaryMessage(textMessage, ttlMs);
-                    System.out.println("🎯 Mensaje 'Starts Player' mostrado en ViewLoading: " + textMessage);
+                    System.out.println("Mensaje 'Starts Player' mostrado en ViewLoading: " + textMessage);
                     
-                    // ✅ NUEVO: Esperar a que termine el mensaje y luego ir al juego
+                    // NUEVO: Esperar a que termine el mensaje y luego ir al juego
                     Main.pauseDuring(ttlMs + 500, () -> {
                         completeLoadingAndStartGame();
                     });
                 } else {
-                    System.err.println("❌ CtrlLoading no disponible para mostrar mensaje");
+                    System.err.println("CtrlLoading no disponible para mostrar mensaje");
                     // Fallback: ir directamente al juego
                     completeLoadingAndStartGame();
                 }
@@ -384,7 +384,7 @@ public class Main extends Application {
         }
     }
 
-    // ✅ NUEVO: Método para completar la carga e iniciar el juego
+    // NUEVO: Método para completar la carga e iniciar el juego
     private static void completeLoadingAndStartGame() {
         Platform.runLater(() -> {
             CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
@@ -396,7 +396,7 @@ public class Main extends Application {
                     if (ctrlGame != null) {
                         ctrlGame.setPlayerRole(pendingGameInfo.role, pendingGameInfo.opponent);
                         ctrlGame.startGameSequence();
-                        System.out.println("🎮 Juego iniciado después de carga extendida");
+                        System.out.println("Juego iniciado después de carga extendida");
                     }
                     pendingGameInfo = null;
                 });
@@ -418,9 +418,9 @@ public class Main extends Application {
     private static void handleCountdown(JSONObject json) {
         String countdownValue = json.optString("value", "3");
         
-        // ✅ NUEVO: Si estamos en ViewLoading y llega el countdown, es hora de ir al juego
+        // NUEVO: Si estamos en ViewLoading y llega el countdown, es hora de ir al juego
         if ("3".equals(countdownValue) && pendingGameInfo != null) {
-            System.out.println("⏰ Countdown 3 recibido - Completando carga...");
+            System.out.println("Countdown 3 recibido - Completando carga...");
             completeLoadingAndStartGame();
             return;
         }

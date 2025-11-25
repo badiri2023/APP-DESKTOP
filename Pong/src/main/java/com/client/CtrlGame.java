@@ -138,7 +138,7 @@ public class CtrlGame implements Initializable {
     public void startGameSequence() {
         resetGame();
         currentPhase = GamePhase.WAITING;
-        System.out.println("🎮 Secuencia de juego iniciada - Esperando mensajes del servidor...");
+        System.out.println("Secuencia de juego iniciada - Esperando mensajes del servidor...");
     }
     
     // NUEVO MÉTODO: Mostrar animación de elección de jugador inicial
@@ -300,7 +300,7 @@ public class CtrlGame implements Initializable {
         
         gameCanvas.setOnMouseClicked(e -> {
             gameContainer.requestFocus();
-            System.out.println("🖱️ Canvas clickeado - Focus solicitado");
+            System.out.println("Canvas clickeado - Focus solicitado");
         });
         
         // Solicitar focus inicial
@@ -324,7 +324,7 @@ public class CtrlGame implements Initializable {
         
         // Solo procesar movimientos si el juego está activo
         if (!gameActive || GamePhase.PLAYING != currentPhase) {
-            System.out.println("❌ Movimiento ignorado - Juego no activo o fase incorrecta");
+            System.out.println("Movimiento ignorado - Juego no activo o fase incorrecta");
             return;
         }
         
@@ -351,7 +351,7 @@ public class CtrlGame implements Initializable {
     private void startContinuousMovement() {
         if (movementTimeline != null && movementTimeline.getStatus() != Animation.Status.RUNNING) {
             movementTimeline.play();
-            System.out.println("🎮 Movimiento continuo INICIADO");
+            System.out.println("Movimiento continuo INICIADO");
         }
     }
     
@@ -359,7 +359,7 @@ public class CtrlGame implements Initializable {
     private void stopContinuousMovement() {
         if (movementTimeline != null) {
             movementTimeline.stop();
-            System.out.println("🎮 Movimiento continuo DETENIDO");
+            System.out.println("Movimiento continuo DETENIDO");
         }
     }
 

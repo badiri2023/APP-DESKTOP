@@ -1,5 +1,6 @@
 package com.client;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -73,6 +74,14 @@ public class CtrlOpponentSelection implements Initializable {
             
             // Solicitar lista de jugadores al servidor
             requestPlayersList();
+
+            // Auto-seleccionar último oponente después de un momento
+            Platform.runLater(() -> {
+                if (!lastOpponent.isEmpty()) {
+                    pauseThenSelectOpponent();
+                }
+            });
+
             
         } catch (Exception e) {
             System.err.println("Error en initialize de OpponentSelection: " + e.getMessage());
@@ -159,6 +168,16 @@ public class CtrlOpponentSelection implements Initializable {
             });
         }
     }
+
+    private void pauseThenSelectOpponent() {
+        PauseTransition pause = new PauseTransition(Duration.seconds(1));
+        pause.setOnFinished(e -> {
+            autoSelectOpponent(lastOpponent);
+        });
+        pause.play();
+    }
+
+    
     
     private void setupPlayersList() {
         listPlayers.setOnMouseClicked(event -> {
@@ -310,5 +329,35 @@ public class CtrlOpponentSelection implements Initializable {
     public static void clearInvitation() {
         invitationPending = false;
         pendingOpponent = "";
+    }
+
+    private void autoSelectOpponent(String opponentName) {
+        // Buscar el oponente en la lista
+        for (String player : listPlayers.getItems()) {
+            if (player.equals(opponentName)) {
+                listPlayers.getSelectionModel().select(player);
+                System.out.println("Oponente anterior seleccionado automáticamente: " + opponentName);
+                updateStatus("Oponente anterior disponible: " + opponentName);
+                
+                // Opcional: Mostrar mensaje informativo
+                Platform.runLater(() -> {
+                    AlertManager.showAlert("Revancha Disponible", 
+                        opponentName + " está disponible para una revancha. Haz doble clic para invitar.", 
+                        AlertType.INFORMATION, 4000);
+                });
+                break;
+            }
+        }
+    }
+
+    private String lastOpponent = "";
+
+    public void setLastOpponent(String opponent) {
+        this.lastOpponent = opponent;
+        System.out.println("Último oponente guardado: " + opponent);
+    }
+
+    public void clearLastOpponent() {
+        this.lastOpponent = "";
     }
 }

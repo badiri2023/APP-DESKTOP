@@ -150,48 +150,25 @@ public class CtrlGameOver implements Initializable {
     }
     
     // Método para establecer el ganador
-    public void setWinner(String winnerName, int score1, int score2) {
-        this.winnerName = winnerName;
+    public void setWinner(String winner, int score1, int score2) {
+        this.winnerName = winner;
         this.player1Score = score1;
         this.player2Score = score2;
         
-        System.out.println("Configurando GameOver - Ganador: " + winnerName + " | Score: " + score1 + "-" + score2);
+        System.out.println("Configurando GameOver - Ganador: " + winner + " | Score: " + score1 + "-" + score2);
         
-        // Obtener información del juego anterior
-        String currentPlayer = Main.ctrlLogin.getUserName();
-        System.out.println("Jugador actual: " + currentPlayer);
-        
-        // Determinar si el jugador actual es el ganador
-        this.isCurrentPlayerWinner = winnerName.equals(currentPlayer);
-        System.out.println("¿Es ganador el jugador actual? " + isCurrentPlayerWinner);
-        
-        // Obtener los nombres de los jugadores desde CtrlGame
+        // Obtener información del oponente desde CtrlGame
         CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
         if (ctrlGame != null) {
             try {
-                String opponent = getOpponentNameFromGame(ctrlGame);
-                System.out.println("Oponente: " + opponent);
-                
-                if (opponent != null) {
-                    // Determinar qué jugador es P1 y qué jugador es P2
-                    if (ctrlGameIsPlayer1(ctrlGame)) {
-                        this.player1Name = currentPlayer;
-                        this.player2Name = opponent;
-                        System.out.println("Asignación: P1=" + currentPlayer + ", P2=" + opponent);
-                    } else {
-                        this.player1Name = opponent;
-                        this.player2Name = currentPlayer;
-                        System.out.println("Asignación: P1=" + opponent + ", P2=" + currentPlayer);
-                    }
-                }
+                java.lang.reflect.Field opponentField = CtrlGame.class.getDeclaredField("opponentName");
+                opponentField.setAccessible(true);
+                this.opponentName = (String) opponentField.get(ctrlGame);
+                System.out.println("Oponente para revancha: " + this.opponentName);
             } catch (Exception e) {
-                System.err.println("Error obteniendo nombres de jugadores: " + e.getMessage());
-                // Valores por defecto si hay error
-                this.player1Name = "Jugador 1";
-                this.player2Name = "Jugador 2";
+                System.err.println("Error obteniendo opponentName: " + e.getMessage());
+                this.opponentName = "Oponente";
             }
-        } else {
-            System.err.println("CtrlGame es null - no se puede obtener información del juego");
         }
         
         updateUI();
@@ -314,34 +291,26 @@ public class CtrlGameOver implements Initializable {
     
     @FXML
     private void handleRematch() {
-        if (!rematchProposed) {
-            rematchProposed = true;
-            rematchButton.setText("ESPERANDO...");
-            rematchButton.setDisable(true);
+        // Simplemente volver al lobby para invitar manualmente al mismo oponente
+        UtilsViews.setViewAnimating("ViewOpponentSelection");
+        
+        // Actualizar lista de jugadores
+        if (Main.ctrlOpponentSelection != null) {
+            Main.requestPlayersList();
             
-            if (rematchStatus != null) {
-                rematchStatus.setVisible(true);
-                rematchStatusLabel.setText("Enviando invitación de revancha...");
-            }
-            
-            sendRematchInvitation();
+            // Opcional: Mostrar mensaje informativo
+            Platform.runLater(() -> {
+                AlertManager.showAlert("Revancha", 
+                    "Volviendo al lobby. Puedes invitar a " + opponentName + " para una revancha.", 
+                    AlertType.INFORMATION, 3000);
+            });
         }
     }
 
     @FXML
     private void handleReturnToLobby() {
-        // Limpiar estado
-        rematchProposed = false;
-        rematchAccepted = false;
-        this.player1Name = "";
-        this.player2Name = "";
-        this.winnerName = "";
-        this.opponentName = "";
-        
-        // Volver al lobby
         UtilsViews.setViewAnimating("ViewOpponentSelection");
         
-        // Actualizar lista de jugadores
         if (Main.ctrlOpponentSelection != null) {
             Main.requestPlayersList();
         }

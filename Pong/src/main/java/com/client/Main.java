@@ -424,13 +424,32 @@ public class Main extends Application {
         int finalScore1 = json.optInt("score1", 0);
         int finalScore2 = json.optInt("score2", 0);
         
+        // Obtener el oponente de la partida actual
+        String currentOpponent = "";
+        CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
+        if (ctrlGame != null) {
+            try {
+                java.lang.reflect.Field opponentField = CtrlGame.class.getDeclaredField("opponentName");
+                opponentField.setAccessible(true);
+                currentOpponent = (String) opponentField.get(ctrlGame);
+            } catch (Exception e) {
+                System.err.println("Error obteniendo oponente: " + e.getMessage());
+            }
+        }
+        
+        final String opponent = currentOpponent;
+        
         Platform.runLater(() -> {
-            CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
             if (ctrlGame != null) {
                 if (!reason.isEmpty()) {
                     AlertManager.showAlert("Partida Terminada", reason, AlertType.INFORMATION);
                 }
                 ctrlGame.handleGameOver(winner, finalScore1, finalScore2);
+            }
+            
+            // Guardar el oponente para la selección automática
+            if (ctrlOpponentSelection != null && !opponent.isEmpty()) {
+                ctrlOpponentSelection.setLastOpponent(opponent);
             }
         });
     }
@@ -594,32 +613,32 @@ public class Main extends Application {
     private static void handleGameStart(JSONObject json) {
         String opponent = json.optString("opponent", "");
         String role = json.optString("role", "");
+        
+        // Limpiar último oponente cuando empieza nueva partida
+        if (ctrlOpponentSelection != null) {
+            ctrlOpponentSelection.clearLastOpponent();
+        }
+        
         Platform.runLater(() -> {
             System.out.println("Iniciando partida - Rol: " + role + ", Oponente: " + opponent);
-            
-            String currentView = UtilsViews.getActiveView();
-            
-            if ("ViewGameOver".equals(currentView)) {
-                // Notificar a ViewGameOver que la revancha fue aceptada
-                CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
-                if (ctrlGameOver != null) {
-                    ctrlGameOver.handleInvitationAccepted();
-                }
-            }
-            
-            // Limpiar invitación pendiente
             CtrlOpponentSelection.clearInvitation();
 
-            // Proceder con el flujo normal del juego
             UtilsViews.setViewAnimating("ViewLoading");
             
             CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
             if (ctrlLoading != null) {
                 ctrlLoading.setLoadingMessage("CARGANDO PARTIDA...");
+                
+                // MODIFICADO: Iniciar animación de carga PERO NO TERMINAR AUTOMÁTICAMENTE
+                // Ahora esperaremos mensajes del servidor para continuar
                 ctrlLoading.startIndeterminateLoading();
+                
+                System.out.println("ViewLoading iniciada - Esperando mensajes del servidor...");
+            } else {
+                System.err.println("CtrlLoading no disponible");
             }
             
-            // Guardar información para usar después
+            // NUEVO: Guardar información para usar después
             pendingGameInfo = new GameInfo(opponent, role);
         });
     }

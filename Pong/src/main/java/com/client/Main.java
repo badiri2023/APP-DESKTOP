@@ -254,6 +254,22 @@ public class Main extends Application {
                 case "player_disconnected":
                     handlePlayerDisconnected(json);
                     break;
+
+                case "rematch_request":
+                    handleRematchRequest(json);
+                    break;
+                    
+                case "rematch_accepted":
+                    handleRematchAccepted(json);
+                    break;
+                    
+                case "rematch_declined":
+                    handleRematchDeclined(json);
+                    break;
+                    
+                case "rematch_start":
+                    handleRematchStart(json);
+                    break;
                     
                 default:
                     System.out.println("Mensaje no manejado - Tipo: " + type);
@@ -480,6 +496,99 @@ public class Main extends Application {
                 requestPlayersList();
             }
         });
+    }
+
+    private static void handleRematchRequest(JSONObject json) {
+        String fromPlayer = json.optString("from", "");
+        System.out.println("Solicitud de revancha recibida de: " + fromPlayer);
+        
+        Platform.runLater(() -> {
+            AlertManager.showConfirmationDialog(
+                "Solicitud de Revancha",
+                "¿Aceptas la revancha contra " + fromPlayer + "?",
+                () -> acceptRematch(fromPlayer),  // onConfirm
+                () -> declineRematch(fromPlayer)  // onCancel
+            );
+        });
+    }
+
+    private static void handleRematchAccepted(JSONObject json) {
+        String opponent = json.optString("opponent", "");
+        System.out.println("Revancha aceptada por: " + opponent);
+        
+        Platform.runLater(() -> {
+            CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
+            if (ctrlGameOver != null && "ViewGameOver".equals(UtilsViews.getActiveView())) {
+                ctrlGameOver.handleRematchResponse(true);
+            }
+        });
+    }
+
+    private static void handleRematchDeclined(JSONObject json) {
+        String opponent = json.optString("opponent", "");
+        System.out.println("Revancha rechazada por: " + opponent);
+        
+        Platform.runLater(() -> {
+            CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
+            if (ctrlGameOver != null && "ViewGameOver".equals(UtilsViews.getActiveView())) {
+                ctrlGameOver.handleRematchResponse(false);
+            }
+            
+            // Mostrar alerta informativa
+            AlertManager.showAlert("Revancha Rechazada", 
+                opponent + " ha rechazado la solicitud de revancha.", 
+                AlertType.INFORMATION);
+        });
+    }
+
+    private static void handleRematchStart(JSONObject json) {
+        String opponent = json.optString("opponent", "");
+        String role = json.optString("role", "");
+        
+        System.out.println("Iniciando revancha - Rol: " + role + ", Oponente: " + opponent);
+        
+        Platform.runLater(() -> {
+            UtilsViews.setViewAnimating("ViewLoading");
+            
+            CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
+            if (ctrlLoading != null) {
+                ctrlLoading.setLoadingMessage("CARGANDO REVANCHA...");
+                ctrlLoading.startIndeterminateLoading();
+            }
+            
+            // Guardar información para usar después
+            pendingGameInfo = new GameInfo(opponent, role);
+        });
+    }
+
+    private static void acceptRematch(String fromPlayer) {
+        try {
+            JSONObject response = new JSONObject();
+            response.put("type", "rematch_response");
+            response.put("to", fromPlayer);
+            response.put("accepted", true);
+            
+            Main.wsClient.safeSend(response.toString());
+            System.out.println("Revancha aceptada - Enviando respuesta al servidor");
+            
+        } catch (Exception e) {
+            System.err.println("Error aceptando revancha: " + e.getMessage());
+        }
+    }
+
+    private static void declineRematch(String fromPlayer) {
+        try {
+            JSONObject response = new JSONObject();
+            response.put("type", "rematch_response");
+            response.put("to", fromPlayer);
+            response.put("accepted", false);
+            
+            Main.wsClient.safeSend(response.toString());
+            System.out.println("Revancha rechazada - Enviando respuesta al servidor");
+            
+        } catch (Exception e) {
+            System.err.println("Error rechazando revancha: " + e.getMessage());
+        }
     }
 
     // ========== MÉTODOS DE INVITACIÓN ==========

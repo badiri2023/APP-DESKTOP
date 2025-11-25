@@ -328,6 +328,8 @@ public class CtrlGame implements Initializable {
             CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
             if (ctrlGameOver != null) {
                 ctrlGameOver.setWinner(winner, finalScore1, finalScore2);
+                // Pasar el nombre del oponente para la revancha
+                ctrlGameOver.setOpponent(opponentName);
             }
         });
     }

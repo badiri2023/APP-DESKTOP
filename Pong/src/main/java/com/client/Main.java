@@ -123,44 +123,39 @@ public class Main extends Application {
     }
 
     public static void connectToServer(){
-        pauseDuring(1500, () -> {
-            String url = ctrlLogin.getUrl();
-            if (url == null || url.isEmpty()) {
-                System.err.println("URL del servidor no válida");
-                return;
-            }
-            
-            wsClient = UtilsWS.getSharedInstance(url);
+        String url = ctrlLogin.getUrl();
+        if (url == null || url.isEmpty()) {
+            System.err.println("URL del servidor no válida");
+            return;
+        }
+        
+        wsClient = UtilsWS.getSharedInstance(url);
 
-            wsClient.onMessage((response) -> { 
-                Platform.runLater(() -> { 
-                    wsMessage(response); 
-                }); 
-            });
-            
-            // Esperar a que la conexión se establezca
-            pauseDuring(2000, () -> {
-                if (wsClient != null && wsClient.isOpen()) {
-                    String nicknameMessage = "NICKNAME:" + ctrlLogin.getUserName().trim();
-                    wsClient.safeSend(nicknameMessage);
-                    System.out.println("Enviando nombre de usuario (NICKNAME): " + ctrlLogin.getUserName().trim());
-                    
-                    // Cambiar a vista de selección de oponente después del registro
-                    pauseDuring(1000, () -> {
-                        if (ctrlOpponentSelection != null) {
-                            UtilsViews.setViewAnimating("ViewOpponentSelection");
-                            requestPlayersList();
-                        } else {
-                            System.err.println("Vista de selección de oponente no disponible");
-                        }
-                    });
-                } else {
-                    System.err.println("No se pudo establecer conexión WebSocket");
-                    Platform.runLater(() -> {
-                        AlertManager.showAlert("Error de Conexión", "No se pudo conectar al servidor: " + url, AlertType.ERROR);
-                    });
-                }
-            });
+        wsClient.onMessage((response) -> { 
+            Platform.runLater(() -> { 
+                wsMessage(response); 
+            }); 
+        });
+        
+        // Esperar a que la conexión se establezca
+        pauseDuring(2000, () -> {
+            if (wsClient != null && wsClient.isOpen()) {
+                String nicknameMessage = "NICKNAME:" + ctrlLogin.getUserName().trim();
+                wsClient.safeSend(nicknameMessage);
+                System.out.println("Enviando nombre de usuario (NICKNAME): " + ctrlLogin.getUserName().trim());
+                
+                // NO cambiar de vista aquí - esperar confirmación del servidor (ACCEPTED/REJECTED)
+                System.out.println("Esperando confirmación del servidor...");
+            } else {
+                System.err.println("No se pudo establecer conexión WebSocket");
+                Platform.runLater(() -> {
+                    AlertManager.showAlert("Error de Conexión", "No se pudo conectar al servidor: " + url, AlertType.ERROR);
+                    // Restablecer estado del botón
+                    if (ctrlLogin != null) {
+                        ctrlLogin.resetConnectionState();
+                    }
+                });
+            }
         });
     }
     
@@ -186,11 +181,13 @@ public class Main extends Application {
     private static void wsMessage(String response) {
         try {
             System.out.println("Mensaje recibido del servidor: " + response);
-            
+        
             // Manejar respuestas de texto plano del registro
             if ("ACCEPTED".equals(response)) {
                 Platform.runLater(() -> {
                     System.out.println("Registro aceptado por el servidor");
+                    // Solo cambiar de vista si el registro fue aceptado
+                    UtilsViews.setViewAnimating("ViewOpponentSelection");
                     requestPlayersList();
                 });
                 return;
@@ -199,7 +196,15 @@ public class Main extends Application {
             if ("REJECTED".equals(response)) {
                 Platform.runLater(() -> {
                     System.err.println("Registro rechazado por el servidor");
-                    AlertManager.showAlert("Registro Rechazado", "El nombre de usuario ya está en uso o es inválido", AlertType.ERROR);
+                    // NO cambiar de vista, quedarse en el login
+                    AlertManager.showAlert("Registro Rechazado", 
+                        "El nombre de usuario ya está en uso o es inválido.\nPor favor, elige otro nombre.", 
+                        AlertType.ERROR);
+                    
+                    // Restablecer el estado del botón de conexión
+                    if (ctrlLogin != null) {
+                        ctrlLogin.resetConnectionState();
+                    }
                 });
                 return;
             }
@@ -253,6 +258,21 @@ public class Main extends Application {
                     
                 case "player_disconnected":
                     handlePlayerDisconnected(json);
+                    break;
+                case "rematch_request":
+                    handleRematchRequest(json);
+                    break;
+                    
+                case "rematch_accepted":
+                    handleRematchAccepted(json);
+                    break;
+                    
+                case "rematch_declined":
+                    handleRematchDeclined(json);
+                    break;
+                    
+                case "rematch_start":
+                    handleRematchStart(json);
                     break;
                     
                 default:
@@ -480,6 +500,99 @@ public class Main extends Application {
                 requestPlayersList();
             }
         });
+    }
+
+    private static void handleRematchRequest(JSONObject json) {
+        String fromPlayer = json.optString("from", "");
+        System.out.println("Solicitud de revancha recibida de: " + fromPlayer);
+        
+        Platform.runLater(() -> {
+            AlertManager.showConfirmationDialog(
+                "Solicitud de Revancha",
+                "¿Aceptas la revancha contra " + fromPlayer + "?",
+                () -> acceptRematch(fromPlayer),  // onConfirm
+                () -> declineRematch(fromPlayer)  // onCancel
+            );
+        });
+    }
+
+    private static void handleRematchAccepted(JSONObject json) {
+        String opponent = json.optString("opponent", "");
+        System.out.println("Revancha aceptada por: " + opponent);
+        
+        Platform.runLater(() -> {
+            CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
+            if (ctrlGameOver != null && "ViewGameOver".equals(UtilsViews.getActiveView())) {
+                ctrlGameOver.handleRematchResponse(true);
+            }
+        });
+    }
+
+    private static void handleRematchDeclined(JSONObject json) {
+        String opponent = json.optString("opponent", "");
+        System.out.println("Revancha rechazada por: " + opponent);
+        
+        Platform.runLater(() -> {
+            CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
+            if (ctrlGameOver != null && "ViewGameOver".equals(UtilsViews.getActiveView())) {
+                ctrlGameOver.handleRematchResponse(false);
+            }
+            
+            // Mostrar alerta informativa
+            AlertManager.showAlert("Revancha Rechazada", 
+                opponent + " ha rechazado la solicitud de revancha.", 
+                AlertType.INFORMATION);
+        });
+    }
+
+    private static void handleRematchStart(JSONObject json) {
+        String opponent = json.optString("opponent", "");
+        String role = json.optString("role", "");
+        
+        System.out.println("Iniciando revancha - Rol: " + role + ", Oponente: " + opponent);
+        
+        Platform.runLater(() -> {
+            UtilsViews.setViewAnimating("ViewLoading");
+            
+            CtrlLoading ctrlLoading = (CtrlLoading) UtilsViews.getController("ViewLoading");
+            if (ctrlLoading != null) {
+                ctrlLoading.setLoadingMessage("CARGANDO REVANCHA...");
+                ctrlLoading.startIndeterminateLoading();
+            }
+            
+            // Guardar información para usar después
+            pendingGameInfo = new GameInfo(opponent, role);
+        });
+    }
+
+    private static void acceptRematch(String fromPlayer) {
+        try {
+            JSONObject response = new JSONObject();
+            response.put("type", "rematch_response");
+            response.put("to", fromPlayer);
+            response.put("accepted", true);
+            
+            Main.wsClient.safeSend(response.toString());
+            System.out.println("Revancha aceptada - Enviando respuesta al servidor");
+            
+        } catch (Exception e) {
+            System.err.println("Error aceptando revancha: " + e.getMessage());
+        }
+    }
+
+    private static void declineRematch(String fromPlayer) {
+        try {
+            JSONObject response = new JSONObject();
+            response.put("type", "rematch_response");
+            response.put("to", fromPlayer);
+            response.put("accepted", false);
+            
+            Main.wsClient.safeSend(response.toString());
+            System.out.println("Revancha rechazada - Enviando respuesta al servidor");
+            
+        } catch (Exception e) {
+            System.err.println("Error rechazando revancha: " + e.getMessage());
+        }
     }
 
     // ========== MÉTODOS DE INVITACIÓN ==========

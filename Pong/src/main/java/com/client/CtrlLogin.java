@@ -263,6 +263,17 @@ public class CtrlLogin implements Initializable {
         }
     }
 
+    /**
+    * Restablece el estado del botón de conexión después de un rechazo
+    */
+    public void resetConnectionState() {
+        if (connectButton != null) {
+            connectButton.setText("Connectar");
+            connectButton.setDisable(false);
+            applyConnectButtonNormalStyle();
+        }
+    }
+
     // En el método handleConnect(), mejorar el flujo:
 
     @FXML
@@ -288,9 +299,16 @@ public class CtrlLogin implements Initializable {
                 Thread.sleep(2000);
                 
                 Platform.runLater(() -> {
-                    setConnectedState();
-                    // Conectar al servidor - ahora enviará NICKNAME: correctamente
-                    Main.connectToServer();
+                    // Solo establecer estado conectado si realmente se conectó
+                    // La confirmación real vendrá del servidor con ACCEPTED/REJECTED
+                    if (Main.wsClient != null && Main.wsClient.isOpen()) {
+                        setConnectedState();
+                        // Conectar al servidor - ahora enviará NICKNAME: correctamente
+                        Main.connectToServer();
+                    } else {
+                        setErrorState();
+                        AlertManager.showAlert("Error de Connexió", "No s'ha pogut connectar al servidor", AlertType.INFORMATION);
+                    }
                 });
                 
             } catch (InterruptedException ex) {

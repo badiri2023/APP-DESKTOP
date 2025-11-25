@@ -3,6 +3,9 @@ package com.client;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import org.json.JSONObject;
+
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -308,7 +311,6 @@ public class CtrlGameOver implements Initializable {
         }
     }
     
-    // Resto de métodos permanecen igual...
     @FXML
     private void handleRematch() {
         if (!rematchProposed) {
@@ -318,44 +320,69 @@ public class CtrlGameOver implements Initializable {
             
             if (rematchStatus != null) {
                 rematchStatus.setVisible(true);
+                rematchStatusLabel.setText("Solicitando revancha...");
             }
             
             sendRematchRequest();
         }
     }
-    
+
     @FXML
     private void handleReturnToLobby() {
-        UtilsViews.setView("ViewOpponentSelection");
+        // Limpiar estado de revancha
         rematchProposed = false;
         rematchAccepted = false;
-        this.player1Name = "";
-        this.player2Name = "";
-        this.winnerName = "";
         
+        // Volver al lobby
+        UtilsViews.setViewAnimating("ViewOpponentSelection");
+        
+        // Actualizar lista de jugadores
         if (Main.ctrlOpponentSelection != null) {
             Main.requestPlayersList();
         }
     }
-    
+
     private void sendRematchRequest() {
         try {
-            System.out.println("Solicitud de revancha enviada - " + player1Name + " vs " + player2Name);
+            JSONObject rematchMsg = new JSONObject();
+            rematchMsg.put("type", "rematch");
+            rematchMsg.put("opponent", opponentName); // opponentName debería estar disponible
+            
+            Main.wsClient.safeSend(rematchMsg.toString());
+            System.out.println("Solicitud de revancha enviada a: " + opponentName);
+            
         } catch (Exception e) {
             System.err.println("Error enviando solicitud de revancha: " + e.getMessage());
+            // Restablecer botón en caso de error
+            rematchButton.setText("Revancha");
+            rematchButton.setDisable(false);
         }
     }
-    
+
     public void handleRematchResponse(boolean accepted) {
-        if (accepted) {
-            rematchAccepted = true;
-            Main.pauseDuring(1000, () -> {
-                UtilsViews.setViewAnimating("ViewLoading");
-            });
-        } else {
-            rematchButton.setDisable(true);
-            rematchButton.setText("REVANCHA RECHAZADA");
-        }
+        Platform.runLater(() -> {
+            if (accepted) {
+                rematchAccepted = true;
+                rematchStatusLabel.setText("¡Revancha aceptada! Iniciando...");
+                
+                Main.pauseDuring(2000, () -> {
+                    UtilsViews.setViewAnimating("ViewLoading");
+                    // El servidor se encargará de iniciar la nueva partida
+                });
+            } else {
+                rematchButton.setDisable(true);
+                rematchButton.setText("REVANCHA RECHAZADA");
+                rematchStatusLabel.setText("El oponente rechazó la revancha");
+            }
+        });
+    }
+
+    // Añade estos campos a la clase
+    private String opponentName = "";
+
+    // Método para establecer el oponente
+    public void setOpponent(String opponent) {
+        this.opponentName = opponent;
     }
     
     public void disableRematch() {

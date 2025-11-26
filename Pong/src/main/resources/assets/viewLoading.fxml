@@ -9,23 +9,37 @@
 
 <AnchorPane fx:id="loadingContainer" minHeight="700.0" minWidth="1200.0" style="-fx-background-color: #000000;" xmlns="http://javafx.com/javafx/24.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.client.CtrlLoading">
    <children>
-      <VBox alignment="CENTER" spacing="40.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <VBox alignment="CENTER" spacing="50.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <padding>
-            <Insets top="80.0" />
+            <Insets top="100.0" bottom="100.0" />
          </padding>
          
-         <!-- Título de carga -->
-         <Label fx:id="loadingText" style="-fx-text-fill: #ffffff;" text="CARGANDO..."/>
-
-         <Label fx:id="messageLabel" style="-fx-text-fill: #00ffff;" text="Mensaje temporal" visible="false"/>
-         
-         <!-- Barra de progreso -->
-         <ProgressBar fx:id="loadingBar" prefWidth="400.0" progress="0.0" />
+         <!-- Contenedor principal centrado -->
+         <VBox alignment="CENTER" spacing="40.0" prefWidth="600.0">
+            <!-- Título de carga -->
+            <VBox alignment="CENTER" spacing="20.0">
+               <Label fx:id="loadingText" style="-fx-text-fill: #ffffff;" text="CARGANDO..."/>
+               <Label fx:id="messageLabel" style="-fx-text-fill: #ffffff;" text="Mensaje temporal" visible="false"/>
+            </VBox>
+            
+            <!-- Barra de progreso -->
+            <VBox alignment="CENTER" spacing="10.0" prefWidth="400.0">
+               <ProgressBar fx:id="loadingBar" prefWidth="400.0" prefHeight="25.0" progress="0.0" />
+            </VBox>
+         </VBox>
          
          <!-- Footer -->
          <VBox alignment="CENTER" spacing="5.0" VBox.vgrow="ALWAYS">
-            <Label style="-fx-text-fill: #333333;" text="27 D 2025"/>
-            <Label style="-fx-text-fill: #666666;" text="PREPARANDO PARTIDA..."/>
+            <Label style="-fx-text-fill: #666666;" text="27 D 2025">
+               <font>
+                  <Font name="8bitOperatorPlus8-Regular" size="12.0" />
+               </font>
+            </Label>
+            <Label style="-fx-text-fill: #444444;" text="PREPARANDO PARTIDA...">
+               <font>
+                  <Font name="8bitOperatorPlus8-Regular" size="10.0" />
+               </font>
+            </Label>
          </VBox>
       </VBox>
    </children>

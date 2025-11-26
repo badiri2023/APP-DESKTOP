@@ -16,15 +16,15 @@
          </padding>
          
          <!-- Título GAME OVER -->
-         <Label fx:id="gameOverLabel" style="-fx-text-fill: #ff0000;" text="GAME OVER">
+         <Label fx:id="gameOverLabel" style="-fx-text-fill: #ffffff;" text="GAME OVER">
             <font>
                <Font name="8bitOperatorPlus8-Regular" size="64.0" />
             </font>
          </Label>
          
-         <!-- Ganador -->
+         <!-- Resultado -->
          <VBox alignment="CENTER" prefWidth="600.0" spacing="20.0" style="-fx-background-color: #1a1a1a; -fx-border-color: #ffffff; -fx-border-width: 2; -fx-padding: 30;">
-            <Label fx:id="winnerLabel" style="-fx-text-fill: #ffcc00;" text="PLAYER">
+            <Label fx:id="winnerLabel" style="-fx-text-fill: #ffffff;" text="PLAYER">
                <font>
                   <Font name="8bitOperatorPlus8-Regular" size="36.0" />
                </font>
@@ -83,7 +83,7 @@
          
          <!-- Estado de revancha -->
          <VBox fx:id="rematchStatus" alignment="CENTER" spacing="10.0" visible="false">
-            <Label fx:id="rematchStatusLabel" style="-fx-text-fill: #ffff00;" text="ESPERANDO RESPUESTA...">
+            <Label fx:id="rematchStatusLabel" style="-fx-text-fill: #cccccc;" text="ESPERANDO RESPUESTA...">
                <font>
                   <Font name="8bitOperatorPlus8-Regular" size="14.0" />
                </font>
@@ -97,12 +97,12 @@
          
          <!-- Footer -->
          <VBox alignment="CENTER" spacing="5.0" VBox.vgrow="ALWAYS">
-            <Label style="-fx-text-fill: #333333;" text="27 D - 2025">
+            <Label style="-fx-text-fill: #666666;" text="27 D - 2025">
                <font>
                   <Font name="8bitOperatorPlus8-Regular" size="12.0" />
                </font>
             </Label>
-            <Label style="-fx-text-fill: #666666;" text="INSERT COIN TO CONTINUE">
+            <Label style="-fx-text-fill: #444444;" text="INSERT COIN TO CONTINUE">
                <font>
                   <Font name="8bitOperatorPlus8-Regular" size="10.0" />
                </font>

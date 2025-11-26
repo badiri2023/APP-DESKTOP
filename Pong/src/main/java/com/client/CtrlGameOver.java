@@ -60,20 +60,21 @@ public class CtrlGameOver implements Initializable {
     }
     
     private void applyStyles() {
-        // Estilo del título GAME OVER (color se ajustará dinámicamente)
+        // Estilo del título GAME OVER - BLANCO
         if (gameOverLabel != null) {
             gameOverLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 64));
-            gameOverLabel.setTextFill(Color.RED); // Color inicial rojo
-            gameOverLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 10, 0, 0, 0);");
+            gameOverLabel.setTextFill(Color.WHITE);
+            gameOverLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.8), 10, 0, 0, 0);");
         }
         
-        // Estilo del label del ganador (ahora más grande para compensar la falta de resultLabel)
+        // Estilo del label del ganador - BLANCO
         if (winnerLabel != null) {
-            winnerLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 42)); // Aumentado de 36 a 42
-            winnerLabel.setTextFill(Color.GOLD);
+            winnerLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 42));
+            winnerLabel.setTextFill(Color.WHITE);
+            winnerLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.6), 5, 0, 0, 0);");
         }
         
-        // Estilo de las puntuaciones
+        // Estilo de las puntuaciones - BLANCO
         if (finalScore1 != null) {
             finalScore1.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 24));
             finalScore1.setTextFill(Color.WHITE);
@@ -84,7 +85,7 @@ public class CtrlGameOver implements Initializable {
             finalScore2.setTextFill(Color.WHITE);
         }
         
-        // Estilo inicial para labels de jugadores
+        // Estilo para labels de jugadores - BLANCO
         if (player1Label != null) {
             player1Label.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 14));
             player1Label.setTextFill(Color.WHITE);
@@ -98,6 +99,12 @@ public class CtrlGameOver implements Initializable {
         // Estilo de botones
         applyButtonStyle(rematchButton);
         applyButtonStyle(returnButton);
+        
+        // Estilo del estado de revancha - GRIS CLARO
+        if (rematchStatusLabel != null) {
+            rematchStatusLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 14));
+            rematchStatusLabel.setTextFill(Color.rgb(204, 204, 204)); // #cccccc
+        }
     }
     
     private void applyButtonStyle(Button button) {
@@ -114,13 +121,13 @@ public class CtrlGameOver implements Initializable {
                 "-fx-pref-height: 50;"
             );
             
-            // Efecto hover
+            // Efecto hover - GRIS OSCURO
             button.setOnMouseEntered(e -> {
                 if (!button.isDisabled()) {
                     button.setStyle(
                         "-fx-background-color: #333333; " +
                         "-fx-text-fill: #ffffff; " +
-                        "-fx-border-color: #ffcc00; " +
+                        "-fx-border-color: #ffffff; " +
                         "-fx-border-width: 2; " +
                         "-fx-border-radius: 5; " +
                         "-fx-background-radius: 5; " +
@@ -222,7 +229,7 @@ public class CtrlGameOver implements Initializable {
         }
     }
     
-    // MODIFICADO: Actualizar toda la interfaz de usuario (sin resultLabel)
+    // MODIFICADO: Actualizar toda la interfaz de usuario (sin colores rojo/verde)
     private void updateUI() {
         System.out.println(" Actualizando UI de GameOver...");
         
@@ -236,7 +243,7 @@ public class CtrlGameOver implements Initializable {
             System.out.println("player2Label: " + player2Name);
         }
         
-        // CORREGIDO: Configurar winnerLabel sin resultLabel
+        // Configurar winnerLabel
         configureWinnerLabel();
         
         // Actualizar puntuaciones
@@ -249,8 +256,8 @@ public class CtrlGameOver implements Initializable {
             System.out.println("finalScore2: " + player2Score);
         }
         
-        // Aplicar colores a AMBAS playerLabels
-        applyWinnerColors();
+        // NOTA: Ya no aplicamos colores diferentes a ganador/perdedor
+        // Ambos jugadores se muestran en BLANCO para mantener consistencia
         
         System.out.println("UI de GameOver actualizada correctamente");
     }
@@ -258,56 +265,9 @@ public class CtrlGameOver implements Initializable {
     // NUEVO: Configurar winnerLabel para mostrar información completa
     private void configureWinnerLabel() {
         if (winnerLabel != null) {
-            // winnerLabel ahora muestra: "WINNER: [Nombre]" o "LOSER: [TuNombre]"
-            if (isCurrentPlayerWinner) {
-                winnerLabel.setText("WINNER: " + Main.ctrlLogin.getUserName());
-                System.out.println("Configurado como GANADOR: " + Main.ctrlLogin.getUserName());
-            } else {
-                winnerLabel.setText("LOSER: " + Main.ctrlLogin.getUserName());
-                System.out.println("Configurado como PERDEDOR: " + Main.ctrlLogin.getUserName());
-            }
-        }
-    }
-    
-    // MODIFICADO: Aplicar colores verde/rojo a AMBAS playerLabels
-    private void applyWinnerColors() {
-        if (player1Label != null && player2Label != null && gameOverLabel != null && winnerLabel != null) {
-            
-            // Resetear colores primero
-            player1Label.setStyle("-fx-text-fill: #ffffff;");
-            player2Label.setStyle("-fx-text-fill: #ffffff;");
-            
-            // Determinar qué jugador es el ganador
-            boolean player1IsWinner = player1Name.equals(winnerName);
-            boolean player2IsWinner = player2Name.equals(winnerName);
-            
-            System.out.println("Aplicando colores - P1 es ganador: " + player1IsWinner + ", P2 es ganador: " + player2IsWinner);
-            
-            // // Aplicar colores a AMBAS playerLabels
-            // if (player1IsWinner) {
-            //     // Player 1 GANADOR (VERDE), Player 2 PERDEDOR (ROJO)
-            //     player1Label.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 3, 0, 0, 0);");
-            //     player2Label.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 3, 0, 0, 0);");
-            //     System.out.println("Player1 VERDE (ganador), Player2 ROJO (perdedor)");
-            // } else if (player2IsWinner) {
-            //     // Player 2 GANADOR (VERDE), Player 1 PERDEDOR (ROJO)
-            //     player1Label.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 3, 0, 0, 0);");
-            //     player2Label.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 3, 0, 0, 0);");
-            //     System.out.println("Player2 VERDE (ganador), Player1 ROJO (perdedor)");
-            // }
-            
-            // GameOverLabel y winnerLabel según el jugador actual
-            if (isCurrentPlayerWinner) {
-                // JUGADOR ACTUAL GANÓ - VERDE
-                gameOverLabel.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 10, 0, 0, 0);");
-                winnerLabel.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 5, 0, 0, 0);");
-                System.out.println("Color VERDE aplicado a GameOver - JUGADOR GANADOR");
-            } else {
-                // JUGADOR ACTUAL PERDIÓ - ROJO
-                gameOverLabel.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 10, 0, 0, 0);");
-                winnerLabel.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 5, 0, 0, 0);");
-                System.out.println(" Color ROJO aplicado a GameOver - JUGADOR PERDEDOR");
-            }
+            // winnerLabel ahora muestra solo el nombre del ganador
+            winnerLabel.setText("GANADOR: " + winnerName);
+            System.out.println("Configurado ganador: " + winnerName);
         }
     }
     

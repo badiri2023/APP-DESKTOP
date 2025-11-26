@@ -598,7 +598,7 @@ public class Main extends Application {
                 // Notificar a ViewGameOver que la revancha fue rechazada
                 CtrlGameOver ctrlGameOver = (CtrlGameOver) UtilsViews.getController("ViewGameOver");
                 if (ctrlGameOver != null) {
-                    ctrlGameOver.handleInvitationDeclined();
+                    //ctrlGameOver.handleInvitationDeclined();
                 }
             } else {
                 // Comportamiento normal para ViewOpponentSelection

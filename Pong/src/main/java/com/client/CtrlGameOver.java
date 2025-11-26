@@ -8,7 +8,6 @@ import org.json.JSONObject;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
@@ -61,20 +60,21 @@ public class CtrlGameOver implements Initializable {
     }
     
     private void applyStyles() {
-        // Estilo del título GAME OVER (color se ajustará dinámicamente)
+        // Estilo del título GAME OVER - BLANCO
         if (gameOverLabel != null) {
             gameOverLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 64));
-            gameOverLabel.setTextFill(Color.RED); // Color inicial rojo
-            gameOverLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 10, 0, 0, 0);");
+            gameOverLabel.setTextFill(Color.WHITE);
+            gameOverLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.8), 10, 0, 0, 0);");
         }
         
-        // Estilo del label del ganador (ahora más grande para compensar la falta de resultLabel)
+        // Estilo del label del ganador - BLANCO
         if (winnerLabel != null) {
-            winnerLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 42)); // Aumentado de 36 a 42
-            winnerLabel.setTextFill(Color.GOLD);
+            winnerLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 42));
+            winnerLabel.setTextFill(Color.WHITE);
+            winnerLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.6), 5, 0, 0, 0);");
         }
         
-        // Estilo de las puntuaciones
+        // Estilo de las puntuaciones - BLANCO
         if (finalScore1 != null) {
             finalScore1.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 24));
             finalScore1.setTextFill(Color.WHITE);
@@ -85,7 +85,7 @@ public class CtrlGameOver implements Initializable {
             finalScore2.setTextFill(Color.WHITE);
         }
         
-        // Estilo inicial para labels de jugadores
+        // Estilo para labels de jugadores - BLANCO
         if (player1Label != null) {
             player1Label.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 14));
             player1Label.setTextFill(Color.WHITE);
@@ -99,6 +99,12 @@ public class CtrlGameOver implements Initializable {
         // Estilo de botones
         applyButtonStyle(rematchButton);
         applyButtonStyle(returnButton);
+        
+        // Estilo del estado de revancha - GRIS CLARO
+        if (rematchStatusLabel != null) {
+            rematchStatusLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 14));
+            rematchStatusLabel.setTextFill(Color.rgb(204, 204, 204)); // #cccccc
+        }
     }
     
     private void applyButtonStyle(Button button) {
@@ -115,13 +121,13 @@ public class CtrlGameOver implements Initializable {
                 "-fx-pref-height: 50;"
             );
             
-            // Efecto hover
+            // Efecto hover - GRIS OSCURO
             button.setOnMouseEntered(e -> {
                 if (!button.isDisabled()) {
                     button.setStyle(
                         "-fx-background-color: #333333; " +
                         "-fx-text-fill: #ffffff; " +
-                        "-fx-border-color: #ffcc00; " +
+                        "-fx-border-color: #ffffff; " +
                         "-fx-border-width: 2; " +
                         "-fx-border-radius: 5; " +
                         "-fx-background-radius: 5; " +
@@ -150,25 +156,48 @@ public class CtrlGameOver implements Initializable {
     }
     
     // Método para establecer el ganador
-    public void setWinner(String winner, int score1, int score2) {
-        this.winnerName = winner;
+    public void setWinner(String winnerName, int score1, int score2) {
+        this.winnerName = winnerName;
         this.player1Score = score1;
         this.player2Score = score2;
         
-        System.out.println("Configurando GameOver - Ganador: " + winner + " | Score: " + score1 + "-" + score2);
+        System.out.println("Configurando GameOver - Ganador: " + winnerName + " | Score: " + score1 + "-" + score2);
         
-        // Obtener información del oponente desde CtrlGame
+        // Obtener información del juego anterior
+        String currentPlayer = Main.ctrlLogin.getUserName();
+        System.out.println("Jugador actual: " + currentPlayer);
+        
+        // Determinar si el jugador actual es el ganador
+        this.isCurrentPlayerWinner = winnerName.equals(currentPlayer);
+        System.out.println("¿Es ganador el jugador actual? " + isCurrentPlayerWinner);
+        
+        // Obtener los nombres de los jugadores desde CtrlGame
         CtrlGame ctrlGame = (CtrlGame) UtilsViews.getController("ViewGame");
         if (ctrlGame != null) {
             try {
-                java.lang.reflect.Field opponentField = CtrlGame.class.getDeclaredField("opponentName");
-                opponentField.setAccessible(true);
-                this.opponentName = (String) opponentField.get(ctrlGame);
-                System.out.println("Oponente para revancha: " + this.opponentName);
+                String opponent = getOpponentNameFromGame(ctrlGame);
+                System.out.println("Oponente: " + opponent);
+                
+                if (opponent != null) {
+                    // Determinar qué jugador es P1 y qué jugador es P2
+                    if (ctrlGameIsPlayer1(ctrlGame)) {
+                        this.player1Name = currentPlayer;
+                        this.player2Name = opponent;
+                        System.out.println("Asignación: P1=" + currentPlayer + ", P2=" + opponent);
+                    } else {
+                        this.player1Name = opponent;
+                        this.player2Name = currentPlayer;
+                        System.out.println("Asignación: P1=" + opponent + ", P2=" + currentPlayer);
+                    }
+                }
             } catch (Exception e) {
-                System.err.println("Error obteniendo opponentName: " + e.getMessage());
-                this.opponentName = "Oponente";
+                System.err.println("Error obteniendo nombres de jugadores: " + e.getMessage());
+                // Valores por defecto si hay error
+                this.player1Name = "Jugador 1";
+                this.player2Name = "Jugador 2";
             }
+        } else {
+            System.err.println("CtrlGame es null - no se puede obtener información del juego");
         }
         
         updateUI();
@@ -200,7 +229,7 @@ public class CtrlGameOver implements Initializable {
         }
     }
     
-    // MODIFICADO: Actualizar toda la interfaz de usuario (sin resultLabel)
+    // MODIFICADO: Actualizar toda la interfaz de usuario (sin colores rojo/verde)
     private void updateUI() {
         System.out.println(" Actualizando UI de GameOver...");
         
@@ -214,7 +243,7 @@ public class CtrlGameOver implements Initializable {
             System.out.println("player2Label: " + player2Name);
         }
         
-        // CORREGIDO: Configurar winnerLabel sin resultLabel
+        // Configurar winnerLabel
         configureWinnerLabel();
         
         // Actualizar puntuaciones
@@ -227,8 +256,8 @@ public class CtrlGameOver implements Initializable {
             System.out.println("finalScore2: " + player2Score);
         }
         
-        // Aplicar colores a AMBAS playerLabels
-        applyWinnerColors();
+        // NOTA: Ya no aplicamos colores diferentes a ganador/perdedor
+        // Ambos jugadores se muestran en BLANCO para mantener consistencia
         
         System.out.println("UI de GameOver actualizada correctamente");
     }
@@ -236,160 +265,41 @@ public class CtrlGameOver implements Initializable {
     // NUEVO: Configurar winnerLabel para mostrar información completa
     private void configureWinnerLabel() {
         if (winnerLabel != null) {
-            // winnerLabel ahora muestra: "WINNER: [Nombre]" o "LOSER: [TuNombre]"
-            if (isCurrentPlayerWinner) {
-                winnerLabel.setText("WINNER: " + Main.ctrlLogin.getUserName());
-                System.out.println("Configurado como GANADOR: " + Main.ctrlLogin.getUserName());
-            } else {
-                winnerLabel.setText("LOSER: " + Main.ctrlLogin.getUserName());
-                System.out.println("Configurado como PERDEDOR: " + Main.ctrlLogin.getUserName());
-            }
-        }
-    }
-    
-    // MODIFICADO: Aplicar colores verde/rojo a AMBAS playerLabels
-    private void applyWinnerColors() {
-        if (player1Label != null && player2Label != null && gameOverLabel != null && winnerLabel != null) {
-            
-            // Resetear colores primero
-            player1Label.setStyle("-fx-text-fill: #ffffff;");
-            player2Label.setStyle("-fx-text-fill: #ffffff;");
-            
-            // Determinar qué jugador es el ganador
-            boolean player1IsWinner = player1Name.equals(winnerName);
-            boolean player2IsWinner = player2Name.equals(winnerName);
-            
-            System.out.println("Aplicando colores - P1 es ganador: " + player1IsWinner + ", P2 es ganador: " + player2IsWinner);
-            
-            // // Aplicar colores a AMBAS playerLabels
-            // if (player1IsWinner) {
-            //     // Player 1 GANADOR (VERDE), Player 2 PERDEDOR (ROJO)
-            //     player1Label.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 3, 0, 0, 0);");
-            //     player2Label.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 3, 0, 0, 0);");
-            //     System.out.println("Player1 VERDE (ganador), Player2 ROJO (perdedor)");
-            // } else if (player2IsWinner) {
-            //     // Player 2 GANADOR (VERDE), Player 1 PERDEDOR (ROJO)
-            //     player1Label.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 3, 0, 0, 0);");
-            //     player2Label.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 3, 0, 0, 0);");
-            //     System.out.println("Player2 VERDE (ganador), Player1 ROJO (perdedor)");
-            // }
-            
-            // GameOverLabel y winnerLabel según el jugador actual
-            if (isCurrentPlayerWinner) {
-                // JUGADOR ACTUAL GANÓ - VERDE
-                gameOverLabel.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 10, 0, 0, 0);");
-                winnerLabel.setStyle("-fx-text-fill: #00ff00; -fx-effect: dropshadow(three-pass-box, rgba(0,255,0,0.8), 5, 0, 0, 0);");
-                System.out.println("Color VERDE aplicado a GameOver - JUGADOR GANADOR");
-            } else {
-                // JUGADOR ACTUAL PERDIÓ - ROJO
-                gameOverLabel.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 10, 0, 0, 0);");
-                winnerLabel.setStyle("-fx-text-fill: #ff0000; -fx-effect: dropshadow(three-pass-box, rgba(255,0,0,0.8), 5, 0, 0, 0);");
-                System.out.println(" Color ROJO aplicado a GameOver - JUGADOR PERDEDOR");
-            }
+            // winnerLabel ahora muestra solo el nombre del ganador
+            winnerLabel.setText("GANADOR: " + winnerName);
+            System.out.println("Configurado ganador: " + winnerName);
         }
     }
     
     @FXML
     private void handleRematch() {
-        // Simplemente volver al lobby para invitar manualmente al mismo oponente
-        UtilsViews.setViewAnimating("ViewOpponentSelection");
-        
-        // Actualizar lista de jugadores
-        if (Main.ctrlOpponentSelection != null) {
-            Main.requestPlayersList();
+        if (!rematchProposed) {
+            rematchProposed = true;
+            rematchButton.setText("ESPERANDO...");
+            rematchButton.setDisable(true);
             
-            // Opcional: Mostrar mensaje informativo
-            Platform.runLater(() -> {
-                AlertManager.showAlert("Revancha", 
-                    "Volviendo al lobby. Puedes invitar a " + opponentName + " para una revancha.", 
-                    AlertType.INFORMATION, 3000);
-            });
+            if (rematchStatus != null) {
+                rematchStatus.setVisible(true);
+                rematchStatusLabel.setText("Solicitando revancha...");
+            }
+            
+            sendRematchRequest();
         }
     }
 
     @FXML
     private void handleReturnToLobby() {
+        // Limpiar estado de revancha
+        rematchProposed = false;
+        rematchAccepted = false;
+        
+        // Volver al lobby
         UtilsViews.setViewAnimating("ViewOpponentSelection");
         
+        // Actualizar lista de jugadores
         if (Main.ctrlOpponentSelection != null) {
             Main.requestPlayersList();
         }
-    }
-
-    private void sendRematchInvitation() {
-        try {
-            // Usar el sistema normal de invitaciones para la revancha
-            JSONObject invitation = new JSONObject();
-            invitation.put("type", "challenge");
-            invitation.put("to", opponentName);
-            invitation.put("from", Main.ctrlLogin.getUserName());
-            
-            Main.wsClient.safeSend(invitation.toString());
-            System.out.println("Invitación de revancha enviada a: " + opponentName);
-            
-            // Iniciar timeout para la invitación
-            startInvitationTimeout();
-            
-        } catch (Exception e) {
-            System.err.println("Error enviando invitación de revancha: " + e.getMessage());
-            // Restablecer botón en caso de error
-            rematchButton.setText("Revancha");
-            rematchButton.setDisable(false);
-            if (rematchStatus != null) {
-                rematchStatusLabel.setText("Error al enviar invitación");
-            }
-        }
-    }
-
-    private void startInvitationTimeout() {
-        new Thread(() -> {
-            try {
-                Thread.sleep(30000); // 30 segundos timeout
-                
-                Platform.runLater(() -> {
-                    if (rematchProposed && !rematchAccepted) {
-                        rematchProposed = false;
-                        rematchButton.setText("Revancha");
-                        rematchButton.setDisable(false);
-                        if (rematchStatus != null) {
-                            rematchStatusLabel.setText("La invitación ha expirado");
-                        }
-                        
-                        // Mostrar alerta
-                        AlertManager.showAlert("Tiempo Agotado", 
-                            "La invitación de revancha a " + opponentName + " ha expirado.", 
-                            AlertType.WARNING);
-                    }
-                });
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }).start();
-    }
-
-    // Método para manejar cuando la invitación es aceptada (desde Main)
-    public void handleInvitationAccepted() {
-        Platform.runLater(() -> {
-            rematchAccepted = true;
-            rematchStatusLabel.setText("¡Revancha aceptada! Iniciando...");
-            
-            // La transición a ViewLoading se hará desde Main cuando llegue game_start
-            System.out.println("Revancha aceptada - esperando inicio de partida...");
-        });
-    }
-
-    // Método para manejar cuando la invitación es rechazada (desde Main)
-    public void handleInvitationDeclined() {
-        Platform.runLater(() -> {
-            rematchProposed = false;
-            rematchButton.setText("Revancha");
-            rematchButton.setDisable(false);
-            rematchStatusLabel.setText("Revancha rechazada");
-            
-            AlertManager.showAlert("Revancha Rechazada", 
-                opponentName + " ha rechazado tu invitación de revancha.", 
-                AlertType.INFORMATION);
-        });
     }
 
     private void sendRematchRequest() {

@@ -18,19 +18,19 @@ import javafx.util.Duration;
 public class CtrlLoading implements Initializable {
 
     @FXML private Label loadingText;
-    @FXML private Label messageLabel; // NUEVO: Label para mensajes
+    @FXML private Label messageLabel;
     @FXML private ProgressBar loadingBar;
     
     private Timeline loadingTimeline;
     private Timeline textAnimation;
-    private Timeline messageTimeline; // NUEVO: Timeline para mensajes temporales
+    private Timeline messageTimeline;
     private Font retroFont;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         try {
             // Cargar fuente retro
-            retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/8bitOperatorPlus8-Regular.ttf"), 14);
+            retroFont = Font.loadFont(getClass().getResourceAsStream("/assets/fonts/BrunoAce-Regular.ttf"), 14);
             if (retroFont == null) {
                 retroFont = Font.font("Consolas", 14);
             }
@@ -43,32 +43,32 @@ public class CtrlLoading implements Initializable {
     }
     
     private void applyStyles() {
-        // Estilo del texto de carga
+        // Estilo del texto de carga - BLANCO
         if (loadingText != null) {
-            loadingText.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 24));
+            loadingText.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 32));
             loadingText.setTextFill(Color.WHITE);
-            loadingText.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.8), 5, 0, 0, 0);");
+            loadingText.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.8), 8, 0, 0, 0);");
         }
         
-        // NUEVO: Estilo del label de mensajes
+        // Estilo del label de mensajes - BLANCO
         if (messageLabel != null) {
             messageLabel.setFont(Font.font(retroFont.getFamily(), FontWeight.BOLD, 20));
-            messageLabel.setTextFill(Color.CYAN);
-            messageLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,255,255,0.8), 5, 0, 0, 0);");
-            messageLabel.setVisible(false); // Oculto inicialmente
+            messageLabel.setTextFill(Color.WHITE);
+            messageLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,255,0.6), 5, 0, 0, 0);");
+            messageLabel.setVisible(false);
         }
         
-        // Estilo de la barra de progreso
+        // Estilo de la barra de progreso - BLANCO/GRIS
         if (loadingBar != null) {
             loadingBar.setStyle(
-                "-fx-accent: #00ff00; " +
-                "-fx-background-color: #333333; " +
-                "-fx-border-color: #ffffff; " +
+                "-fx-accent: #242222ff; " +  // Barra de progreso BLANCA
+                "-fx-background-color: #333333; " +  // Fondo GRIS oscuro
+                "-fx-border-color: #ffffff; " +  // Borde BLANCO
                 "-fx-border-width: 2; " +
                 "-fx-border-radius: 5; " +
                 "-fx-background-radius: 5; " +
                 "-fx-pref-width: 400; " +
-                "-fx-pref-height: 20;"
+                "-fx-pref-height: 25;"
             );
         }
     }

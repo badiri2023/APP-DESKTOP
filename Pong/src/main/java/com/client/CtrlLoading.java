@@ -61,7 +61,7 @@ public class CtrlLoading implements Initializable {
         // Estilo de la barra de progreso - BLANCO/GRIS
         if (loadingBar != null) {
             loadingBar.setStyle(
-                "-fx-accent: #ffffff; " +  // Barra de progreso BLANCA
+                "-fx-accent: #242222ff; " +  // Barra de progreso BLANCA
                 "-fx-background-color: #333333; " +  // Fondo GRIS oscuro
                 "-fx-border-color: #ffffff; " +  // Borde BLANCO
                 "-fx-border-width: 2; " +
